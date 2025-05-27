@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ConcertTracker.Api.Models;
+﻿namespace MusynqBinder.Shared.Models;
 
 public class Artist {
     public int Id { get; set; }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Abstractions;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.Resource;
+using MusynqBinder.Shared.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,12 @@ app.MapGet("/weatherforecast", (HttpContext httpContext) =>
 app.MapGet("/", () =>
 {
     return "Welcome to the concert service";
+});
+
+app.MapGet("/api/concerts/{artistName}", async (string artistName, HttpContext httpContext, ConcertService concertService) =>
+{
+    var concerts = await concertService.GetConcertsAsync(artistName);
+    return concerts;
 });
 
 app.Run();

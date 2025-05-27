@@ -1,5 +1,5 @@
-using MusynqBinder.Web.Client.Pages;
-using MusynqBinder.Web.Components;
+using MusynqBinder.Web.Wasm.Pages;
+using MusynqBinder.Web.Server.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +34,11 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(MusynqBinder.Web.Client._Imports).Assembly);
+    .AddAdditionalAssemblies(typeof(MusynqBinder.Web.Wasm._Imports).Assembly);
+
+app.MapGet("/api/concerts/{artistName}", (string artistName, HttpContext httpContext) =>
+{
+    return "test 1 2 3 " + artistName;
+});
 
 app.Run();

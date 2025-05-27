@@ -1,4 +1,4 @@
-﻿namespace ConcertTracker.Api.Models;
+﻿namespace MusynqBinder.Shared.Models;
 
 public class Concert {
     public int Id { get; set; }

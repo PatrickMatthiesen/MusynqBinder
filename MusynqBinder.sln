@@ -10,9 +10,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.Tests", "Musyn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcertTracker.Api", "ConcertTracker.Api\ConcertTracker.Api.csproj", "{7938E4D6-82BC-B49F-EB33-2A75C37CA538}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.Web", "MusynqBinder.Web\MusynqBinder.Web\MusynqBinder.Web.csproj", "{F6059C3F-FD1A-5EC4-2D6F-C6B6CD5E57E6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.Web.Server", "MusynqBinder.Web\MusynqBinder.Web.Server\MusynqBinder.Web.Server.csproj", "{F6059C3F-FD1A-5EC4-2D6F-C6B6CD5E57E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.Web.Client", "MusynqBinder.Web\MusynqBinder.Web.Client\MusynqBinder.Web.Client.csproj", "{216C5149-6926-8B7A-91C8-BA6170E9B05F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.Web.Wasm", "MusynqBinder.Web\MusynqBinder.Web.Wasm\MusynqBinder.Web.Wasm.csproj", "{216C5149-6926-8B7A-91C8-BA6170E9B05F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.Shared", "MusynqBinder.Shared\MusynqBinder.Shared.csproj", "{4821A1FD-8C2E-4744-8281-8177B3868A08}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,6 +46,10 @@ Global
 		{216C5149-6926-8B7A-91C8-BA6170E9B05F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{216C5149-6926-8B7A-91C8-BA6170E9B05F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{216C5149-6926-8B7A-91C8-BA6170E9B05F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4821A1FD-8C2E-4744-8281-8177B3868A08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4821A1FD-8C2E-4744-8281-8177B3868A08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4821A1FD-8C2E-4744-8281-8177B3868A08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4821A1FD-8C2E-4744-8281-8177B3868A08}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

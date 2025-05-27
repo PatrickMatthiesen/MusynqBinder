@@ -16,14 +16,14 @@ var concertApi = builder.AddProject<Projects.ConcertTracker_Api>("concerttracker
     .WaitFor(database)
     .WithReference(cache);
 
-builder.AddProject<Projects.MusynqBinder_Web>("webfrontend")
+builder.AddProject<Projects.MusynqBinder_Web_Server>("webfrontend")
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health")
     .WithReference(cache)
-    .WithReference(database)
-    .WithReference(concertApi)
-    .WaitFor(database)
     .WaitFor(cache)
+    .WithReference(database)
+    .WaitFor(database)
+    .WithReference(concertApi)
     .WaitFor(concertApi);
 
 

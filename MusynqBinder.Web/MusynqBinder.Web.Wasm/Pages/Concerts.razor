@@ -1,0 +1,68 @@
+﻿@page "/concerts"
+@inject IHttpClientFactory httpClientFactory
+@inject ILogger<Concerts> Logger
+
+<h3>Concerts</h3>
+
+<input @bind="artistName" placeholder="Search artist..." />
+<button @onclick="LoadConcerts">Search</button>
+
+@if (concerts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!concerts.Any())
+{
+    <p>No concerts found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Artist</th>
+                <th>Date</th>
+                <th>Venue</th>
+                <th>City</th>
+                <th>Country</th>
+                <th>Ticket</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var concert in concerts)
+            {
+                <tr>
+                    <td>@concert.Artist?.Name</td>
+                    <td>@concert.Date.ToString("g")</td>
+                    <td>@concert.VenueName</td>
+                    <td>@concert.City</td>
+                    <td>@concert.Country</td>
+                    <td><a href="@concert.TicketUrl" target="_blank">Buy</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private string artistName = "Coldplay";
+    private List<Concert>? concerts;
+
+    private async Task LoadConcerts()
+    {
+        var httpClient = httpClientFactory.CreateClient("MusyncBinder.Web.Server");
+        Console.WriteLine(httpClient.BaseAddress);
+        if (httpClient.BaseAddress is null)
+        {
+            httpClient.BaseAddress = new Uri("https://localhost:7146");
+        }
+        concerts = await httpClient.GetFromJsonAsync<List<Concert>>($"api/concerts/{Uri.EscapeDataString(artistName)}");
+        // var result = await httpClient.GetStringAsync($"api/concerts/{Uri.EscapeDataString(artistName)}");
+        Logger.LogInformation("idk man please man, i just want to see a log");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadConcerts();
+    }
+}

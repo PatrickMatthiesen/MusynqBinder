@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -10,6 +10,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0-preview.4.25258.110" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0-preview.4.25258.110" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\MusynqBinder.Shared\MusynqBinder.Shared.csproj" />
+  </ItemGroup>
+
 
 </Project>

@@ -1,4 +1,4 @@
-﻿using ConcertTracker.Api.Models;
+﻿using MusynqBinder.Shared.Models;
 
 namespace ConcertTracker.Api.Services;
 
