@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\MusynqBinder.ServiceDefaults\MusynqBinder.ServiceDefaults.csproj" />
     <ProjectReference Include="..\..\MusynqBinder.Shared\MusynqBinder.Shared.csproj" />
     <ProjectReference Include="..\MusynqBinder.Web.Wasm\MusynqBinder.Web.Wasm.csproj" />
+    <PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="9.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0-preview.4.25258.110" />
   </ItemGroup>
 	
