@@ -12,12 +12,12 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.3.0" />
     <PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="9.3.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-preview.4.25258.110" NoWarn="NU1605" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.0-preview.4.25258.110" NoWarn="NU1605" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-preview.4.25258.110" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-preview.5.25277.114" NoWarn="NU1605" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.0-preview.5.25277.114" NoWarn="NU1605" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-preview.5.25277.114" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="3.9.2" />
-    <PackageReference Include="Microsoft.Identity.Web.DownstreamApi" Version="3.9.2" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="3.9.3" />
+    <PackageReference Include="Microsoft.Identity.Web.DownstreamApi" Version="3.9.3" />
   </ItemGroup>
 
   <ItemGroup>

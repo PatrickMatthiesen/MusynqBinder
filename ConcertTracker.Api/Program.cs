@@ -9,7 +9,7 @@ using MusynqBinder.Shared.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddRedisOutputCache(connectionName: "cache");
+//builder.AddRedisOutputCache(connectionName: "cache");
 
 builder.AddNpgsqlDbContext<AppDbContext>(connectionName: "musynqbinder");
 
@@ -37,7 +37,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseOutputCache();
+//app.UseOutputCache();
 
 var scopeRequiredByApi = app.Configuration["AzureAd:Scopes"] ?? "";
 var summaries = new[]
@@ -49,7 +49,7 @@ app.MapGet("/weatherforecast", (HttpContext httpContext) =>
 {
     httpContext.VerifyUserHasAnyAcceptedScope(scopeRequiredByApi);
 
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
+    var forecast = Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
         (
             DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
@@ -60,8 +60,8 @@ app.MapGet("/weatherforecast", (HttpContext httpContext) =>
     return forecast;
 }).WithName("GetWeatherForecast")
     .WithOpenApi()
-    .RequireAuthorization()
-    .CacheOutput();
+    .RequireAuthorization();
+    //.CacheOutput();
 
 app.MapGet("/", () =>
 {
@@ -73,7 +73,7 @@ app.MapGet("/api/concerts/{artistName}", async (string artistName, HttpContext h
     var concerts = await concertService.GetConcertsAsync(artistName);
     return concerts;
 }).WithName("GetConcertsByArtist")
-    .CacheOutput()
+    //.CacheOutput()
     .WithOpenApi();
 
 app.Run();

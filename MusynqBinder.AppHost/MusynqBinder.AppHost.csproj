@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ConcertTracker.Api\ConcertTracker.Api.csproj" />
-    <ProjectReference Include="..\MusynqBinder.Web\MusynqBinder.Web.Server\MusynqBinder.Web.Server.csproj" />
+    <ProjectReference Include="..\MusynqBinder.Web\MusynqBinder.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>

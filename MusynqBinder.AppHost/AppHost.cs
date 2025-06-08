@@ -4,25 +4,30 @@ var ticketmasterApiKey = builder.AddParameter("Ticketmaster-ApiKey", secret: tru
 
 var database = builder.AddPostgres("database")
     .WithDataVolume()
-    .AddDatabase("musynqbinder");
+    .WithLifetime(ContainerLifetime.Persistent);
+    
+var musicDatabase = database.AddDatabase("musynqbinder");
+var identityDatabase = database.AddDatabase("identitydb");
 
 var cache = builder.AddRedis("cache")
+    .WithDataVolume()
     .WithRedisCommander();
 
 var concertApi = builder.AddProject<Projects.ConcertTracker_Api>("concerttracker-api")
     .WithEnvironment("Ticketmaster:ApiKey", ticketmasterApiKey)
     .WithHttpHealthCheck("/health")
-    .WithReference(database)
-    .WaitFor(database)
-    .WithReference(cache);
+    .WithReference(musicDatabase)
+    .WaitFor(musicDatabase)
+    .WithReference(cache)
+    .WaitFor(cache);
 
-builder.AddProject<Projects.MusynqBinder_Web_Server>("webfrontend")
+builder.AddProject<Projects.MusynqBinder_Web>("webfrontend")
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health")
     .WithReference(cache)
     .WaitFor(cache)
-    .WithReference(database)
-    .WaitFor(database)
+    .WithReference(identityDatabase)
+    .WaitFor(identityDatabase)
     .WithReference(concertApi)
     .WaitFor(concertApi);
 

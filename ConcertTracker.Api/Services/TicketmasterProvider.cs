@@ -3,8 +3,9 @@ using System.Text.Json;
 
 namespace ConcertTracker.Api.Services;
 
-public class TicketmasterProvider(HttpClient httpClient, IConfiguration configuration) : IConcertProvider {
+public class TicketmasterProvider(HttpClient httpClient, IConfiguration configuration, ILogger<TicketmasterProvider> logger) : IConcertProvider {
     private readonly string _apiKey = configuration["Ticketmaster:ApiKey"] ?? throw new InvalidOperationException("Ticketmaster API key not configured.");
+
 
     public async Task<IEnumerable<Concert>> FetchConcertsAsync(string artistName) {
         var attractionId = await GetAttractionIdAsync(artistName);
@@ -28,7 +29,9 @@ public class TicketmasterProvider(HttpClient httpClient, IConfiguration configur
 
         foreach (var attraction in attractions.EnumerateArray())
         {
-            var name = attraction.GetProperty("name").GetString();
+            // For now we just get any concert with the artist
+            // Needs to be updated to keep data on all artists at concert
+            var name = attraction.GetProperty("name").GetString(); 
             if (string.Equals(name, artistName, StringComparison.OrdinalIgnoreCase))
                 return attraction.GetProperty("id").GetString();
         }
@@ -51,16 +54,47 @@ public class TicketmasterProvider(HttpClient httpClient, IConfiguration configur
 
         foreach (var ev in events.EnumerateArray())
         {
+            logger.LogInformation("Processing event: {EventId}, Raw: {RawText}", ev.GetProperty("id").GetString() ?? "Unknown", ev.GetRawText());
+            var id = ev.GetProperty("id").GetString() ?? string.Empty;
+            var ticketUrl = ev.GetProperty("url").GetString() ?? string.Empty;
+            var start = ev.GetProperty("dates").GetProperty("start");
+            DateTimeOffset date;
+
+            if (start.TryGetProperty("dateTime", out var dateTimeProp))
+            {
+                
+                date = dateTimeProp.GetDateTimeOffset();
+            }
+            else
+            {
+                date = start.TryGetProperty("localDate", out var localDateProp)
+                    ? DateTimeOffset.Parse(localDateProp.GetString()!) // + "T00:00:00Z")
+                    : DateTimeOffset.MinValue;
+            }
+
+            var venues = ev.GetProperty("_embedded").GetProperty("venues");
+            var venueName = "-- Unknown Venue --";
+            if (venues[0].TryGetProperty("name", out var venueNameProp))
+            {
+                venueName = venueNameProp.GetString();
+            }
+            else if (venues[0].TryGetProperty("fullName", out var fullNameProp))
+            {
+                venueName = fullNameProp.GetString();
+            }
+            var city = venues[0].GetProperty("city").GetProperty("name").GetString() ?? string.Empty;
+            var country = venues[0].GetProperty("country").GetProperty("name").GetString() ?? string.Empty;
+
             var concert = new Concert
             {
                 Source = "Ticketmaster",
-                SourceEventId = ev.GetProperty("id").GetString() ?? string.Empty,
-                TicketUrl = ev.GetProperty("url").GetString() ?? string.Empty,
-                Date = DateTime.Parse(ev.GetProperty("dates").GetProperty("start").GetProperty("dateTime").GetString() ?? DateTime.MinValue.ToString()),
-                VenueName = ev.GetProperty("_embedded").GetProperty("venues")[0].GetProperty("name").GetString() ?? string.Empty,
-                City = ev.GetProperty("_embedded").GetProperty("venues")[0].GetProperty("city").GetProperty("name").GetString() ?? string.Empty,
-                Country = ev.GetProperty("_embedded").GetProperty("venues")[0].GetProperty("country").GetProperty("name").GetString() ?? string.Empty,
-                Artist = new Artist
+                SourceEventId = id,
+                TicketUrl = ticketUrl,
+                Date = date,
+                VenueName = venueName,
+                City = city,
+                Country = country,
+                Artist = new Artist // extract so we can reuse?
                 {
                     Name = ev.GetProperty("_embedded").GetProperty("attractions")[0].GetProperty("name").GetString() ?? string.Empty
                 }
