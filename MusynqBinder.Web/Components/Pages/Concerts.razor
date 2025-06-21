@@ -23,6 +23,18 @@ else if (concerts is [])
 }
 else
 {
+    <p>Found @concerts.Count concerts for <strong>@artistName</strong>.</p>
+    <div class="flex flex-col">
+    @foreach (var concert in concerts)
+    {
+        <div style="display: flex;flex-direction: column;">
+            <p>@concert.Date.ToString("MMM", culture)</p>
+            <p>@concert.Date.ToString("dd")</p>
+        </div>
+
+    }
+    </div>
+    
     <table class="table">
         <thead>
             <tr>
