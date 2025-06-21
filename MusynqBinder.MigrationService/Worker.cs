@@ -14,12 +14,14 @@ namespace MusynqBinder.MigrationService;
 
 public class Worker<TContext>(
     IServiceProvider serviceProvider,
-    IHostApplicationLifetime hostApplicationLifetime) : BackgroundService where TContext : DbContext {
+    IHostApplicationLifetime hostApplicationLifetime) : BackgroundService where TContext : DbContext
+{
     public const string ActivitySourceName = "Migrations";
-    private static readonly ActivitySource s_activitySource = new(ActivitySourceName);
+    private static readonly ActivitySource _activitySource = new(ActivitySourceName);
 
-    protected override async Task ExecuteAsync(CancellationToken cancellationToken) {
-        using var activity = s_activitySource.StartActivity("Migrating database", ActivityKind.Client);
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        using var activity = _activitySource.StartActivity("Migrating database", ActivityKind.Client);
 
         try
         {
@@ -27,19 +29,21 @@ public class Worker<TContext>(
             var dbContext = scope.ServiceProvider.GetRequiredService<TContext>();
 
             await RunMigrationAsync(dbContext, cancellationToken);
+
             if (dbContext is MusicDbContext musicDbContext)
                 await SeedDataAsync(musicDbContext, cancellationToken);
         }
         catch (Exception ex)
         {
-            activity?.RecordException(ex);
+            activity?.AddException(ex);
             throw;
         }
 
         hostApplicationLifetime.StopApplication();
     }
 
-    private static async Task RunMigrationAsync(TContext dbContext, CancellationToken cancellationToken) {
+    private static async Task RunMigrationAsync(TContext dbContext, CancellationToken cancellationToken)
+    {
         var strategy = dbContext.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
@@ -48,14 +52,23 @@ public class Worker<TContext>(
         });
     }
 
-    private static async Task SeedDataAsync(MusicDbContext dbContext, CancellationToken cancellationToken) {
-        Artist firstArtist = new() {
+    private static async Task SeedDataAsync(MusicDbContext dbContext, CancellationToken cancellationToken)
+    {
+        // Check if data already exists
+        if (await dbContext.Artists.AnyAsync(a => a.Name == "Dabin", cancellationToken))
+        {
+            Console.WriteLine("Seed data already exists, skipping...");
+            return; // Data already seeded
+        }
+
+        Artist firstArtist = new()
+        {
             Name = "Dabin",
             Sources = [
                 new ArtistSource {
                     Source = "Ticketmaster",
                     SourceArtistId = "K8vZ917oaYf",
-                    Uri = "https://www.ticketmaster.com/dabin-tickets/artist/1861251"
+                    Url = "https://www.ticketmaster.com/dabin-tickets/artist/1861251"
                 }
             ]
         };
@@ -63,6 +76,9 @@ public class Worker<TContext>(
         var strategy = dbContext.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
+            // Check if operation was cancelled before proceeding
+            cancellationToken.ThrowIfCancellationRequested();
+
             // Seed the database
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
             await dbContext.Artists.AddAsync(firstArtist, cancellationToken);

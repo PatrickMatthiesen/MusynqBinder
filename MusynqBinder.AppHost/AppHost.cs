@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -7,15 +7,16 @@ var googleClientId = builder.AddParameter("Google-OAuth-ClientId", secret: true)
 var googleClientSecret = builder.AddParameter("Google-OAuth-ClientSecret", secret: true);
 
 var database = builder.AddPostgres("database")
-    .WithDataVolume()
-    .WithLifetime(ContainerLifetime.Persistent);
-    
+    //.WithDataVolume()
+    //.WithLifetime(ContainerLifetime.Persistent)
+    .WithHostPort(65432);
+
 var musicDatabase = database.AddDatabase("musynqbinder");
 var identityDatabase = database.AddDatabase("identitydb");
 
 var cache = builder.AddRedis("cache")
-    .WithDataVolume()
-    .WithRedisCommander();
+    .WithDataVolume();
+cache.WithRedisCommander();
 
 var migrations = builder.AddProject<Projects.MusynqBinder_MigrationService>("musynqbinder-migrationservice")
     .WithReferenceAndWait(musicDatabase)
@@ -25,7 +26,14 @@ var concertApi = builder.AddProject<Projects.ConcertTracker_Api>("concerttracker
     .WithEnvironment("Ticketmaster:ApiKey", ticketmasterApiKey)
     .WithHttpHealthCheck("/health")
     .WithReferenceAndWait(musicDatabase)
-    .WithReferenceAndWait(cache);
+    .WithReferenceAndWait(cache)
+    .WaitForCompletion(migrations);
+
+var webDirectory = Path.GetFullPath(Path.Combine(builder.AppHostDirectory, "..", "MusynqBinder.Web"));
+var command = builder.Environment.IsDevelopment()
+    ? "bun build:css:dev"
+    : "bun build:css";
+var tailwindCss = builder.AddExecutable("tailwindcss", "bun build:css:dev", webDirectory);
 
 builder.AddProject<Projects.MusynqBinder_Web>("webfrontend")
     .WithEnvironment("Google:ClientId", googleClientId)
@@ -35,7 +43,8 @@ builder.AddProject<Projects.MusynqBinder_Web>("webfrontend")
     .WithReferenceAndWait(cache)
     .WithReferenceAndWait(identityDatabase)
     .WithReferenceAndWait(concertApi)
-    .WaitFor(concertApi);
+    .WaitFor(concertApi)
+    .WaitForCompletion(migrations);
 
 
 builder.Build().Run();

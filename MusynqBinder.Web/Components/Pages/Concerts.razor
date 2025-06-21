@@ -1,4 +1,6 @@
 ﻿@page "/concerts"
+@using MusynqBinder.Shared.DTO
+@using System.Globalization
 @inject IHttpClientFactory httpClientFactory
 @inject ILogger<Concerts> Logger
 @rendermode InteractiveServer
@@ -9,13 +11,13 @@
 <EditForm Model="artistName" OnSubmit="LoadConcerts" FormName="SearchArtists" >
 
 <input name="artistSearchInput" @bind="artistName" placeholder="Search artist..." />
-<button type="submit">Search</button>
+<button class="button" type="submit">Search</button>
 
 @if (concerts == null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>@placeholder</em></p>
 }
-else if (!concerts.Any())
+else if (concerts is [])
 {
     <p>No concerts found.</p>
 }
@@ -24,20 +26,20 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>Artist</th>
                 <th>Date</th>
+                <th>Artist</th>
                 <th>Venue</th>
                 <th>City</th>
                 <th>Country</th>
-                <th>Ticket</th>
+                <th>Tickets</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var concert in concerts)
             {
                 <tr>
-                    <td>@concert.Artists.select(a => a.Name).join(", ")</td>
-                    <td>@concert.Date.ToString("g")</td>
+                    <td class="text-nowrap">🗓️@concert.Date.ToString("ddd dd MMM ", CultureInfo.CreateSpecificCulture("en-US"))</td>
+                    <td>@string.Join(", ", GetTop5SimilarArtists(concert.Artists.Select(a => a.Name).ToList(), artistName))</td>
                     <td>@concert.VenueName</td>
                     <td>@concert.City</td>
                     <td>@concert.Country</td>
@@ -50,20 +52,58 @@ else
 </EditForm>
 
 @code {
-    private string artistName = "Coldplay";
-    private List<Concert>? concerts;
+    private string artistName = "Dabin";
+    private string placeholder = "^ search for your favorite artist";
+    private CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+    private List<ConcertDto>? concerts;
 
     private async Task LoadConcerts()
     {
         concerts = null;
+        placeholder = "Loading concerts...";
 
-        var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
-        concerts = await httpClient.GetFromJsonAsync<List<Concert>>($"api/concerts/{Uri.EscapeDataString(artistName)}");
-        // var result = await httpClient.GetStringAsync($"api/concerts/{Uri.EscapeDataString(artistName)}");
+        try
+        {
+            var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
+            concerts = await httpClient.GetFromJsonAsync<List<ConcertDto>>($"api/concerts/{Uri.EscapeDataString(artistName)}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading concerts for {ArtistName}", artistName);
+            placeholder = "Error loading concerts. Please try again later.";
+        }
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadConcerts();
+    private List<string> GetTop5SimilarArtists(List<string> names, string searchString) {
+        return names
+            .OrderBy(n => LevenshteinDistance(n, searchString))
+            .Take(5)
+            .ToList();
+    }
+
+    private int LevenshteinDistance(string a, string b) {
+        if (string.IsNullOrEmpty(a))
+            return b?.Length ?? 0;
+        if (string.IsNullOrEmpty(b))
+            return a.Length;
+
+        var costs = new int[b.Length + 1];
+        for (int j = 0; j < costs.Length; j++)
+            costs[j] = j;
+
+        for (int i = 1; i <= a.Length; i++)
+        {
+            costs[0] = i;
+            int prevCost = i - 1;
+            for (int j = 1; j <= b.Length; j++)
+            {
+                int currentCost = costs[j];
+                costs[j] = Math.Min(
+                    Math.Min(costs[j] + 1, costs[j - 1] + 1),
+                    prevCost + (a[i - 1] == b[j - 1] ? 0 : 1));
+                prevCost = currentCost;
+            }
+        }
+        return costs[b.Length];
     }
 }
