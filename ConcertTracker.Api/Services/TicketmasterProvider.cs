@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace ConcertTracker.Api.Services;
 
-public class TicketmasterProvider(HttpClient httpClient, IConfiguration configuration, ILogger<TicketmasterProvider> logger) : IConcertProvider {
+public class TicketmasterProvider(MusicDbContext context, HttpClient httpClient, IConfiguration configuration, ILogger<TicketmasterProvider> logger) : IConcertProvider {
     private readonly string _apiKey = configuration["Ticketmaster:ApiKey"] ?? throw new InvalidOperationException("Ticketmaster API key not configured.");
 
 

@@ -9,9 +9,11 @@ using MusynqBinder.Shared.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddRedisClient(connectionName: "cache");
+
 //builder.AddRedisOutputCache(connectionName: "cache");
 
-builder.AddNpgsqlDbContext<AppDbContext>(connectionName: "musynqbinder");
+builder.AddNpgsqlDbContext<MusicDbContext>(connectionName: "musynqbinder");
 
 builder.Services.AddScoped<IConcertProvider, TicketmasterProvider>();
 builder.Services.AddScoped<ConcertService>();
