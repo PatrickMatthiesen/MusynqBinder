@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MusynqBinder.Web.Components;
 using MusynqBinder.Web.Components.Account;
 using MusynqBinder.Web.Data;
+using Google.Apis.Auth.AspNetCore3;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,11 @@ builder.Services.AddAuthentication(options =>
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     })
+    .AddGoogleOpenIdConnect(options =>
+    {
+        options.ClientId = builder.Configuration["Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId not configured.");
+        options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret not configured.");
+    })
     .AddIdentityCookies();
 
 builder.AddNpgsqlDbContext<ApplicationDbContext>(connectionName: "identitydb");
@@ -51,6 +57,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
 }
 else
 {

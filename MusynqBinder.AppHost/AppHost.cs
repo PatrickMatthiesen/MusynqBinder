@@ -1,6 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var ticketmasterApiKey = builder.AddParameter("Ticketmaster-ApiKey", secret: true);
+var googleClientId = builder.AddParameter("Google-OAuth-ClientId", secret: true);
+var googleClientSecret = builder.AddParameter("Google-OAuth-ClientSecret", secret: true);
 
 var database = builder.AddPostgres("database")
     .WithDataVolume()
@@ -13,23 +17,40 @@ var cache = builder.AddRedis("cache")
     .WithDataVolume()
     .WithRedisCommander();
 
+var migrations = builder.AddProject<Projects.MusynqBinder_MigrationService>("musynqbinder-migrationservice")
+    .WithReferenceAndWait(musicDatabase)
+    .WithReferenceAndWait(identityDatabase);
+
 var concertApi = builder.AddProject<Projects.ConcertTracker_Api>("concerttracker-api")
     .WithEnvironment("Ticketmaster:ApiKey", ticketmasterApiKey)
     .WithHttpHealthCheck("/health")
-    .WithReference(musicDatabase)
-    .WaitFor(musicDatabase)
-    .WithReference(cache)
-    .WaitFor(cache);
+    .WithReferenceAndWait(musicDatabase)
+    .WithReferenceAndWait(cache);
 
 builder.AddProject<Projects.MusynqBinder_Web>("webfrontend")
+    .WithEnvironment("Google:ClientId", googleClientId)
+    .WithEnvironment("Google:ClientSecret", googleClientSecret)
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health")
-    .WithReference(cache)
-    .WaitFor(cache)
-    .WithReference(identityDatabase)
-    .WaitFor(identityDatabase)
-    .WithReference(concertApi)
+    .WithReferenceAndWait(cache)
+    .WithReferenceAndWait(identityDatabase)
+    .WithReferenceAndWait(concertApi)
     .WaitFor(concertApi);
 
 
 builder.Build().Run();
+
+
+public static class AppHostExtensions {
+    public static IResourceBuilder<ProjectResource> WithReferenceAndWait(this IResourceBuilder<ProjectResource> project, 
+            IResourceBuilder<IResourceWithConnectionString> resource) =>
+        project
+            .WithReference(resource)
+            .WaitFor(resource);
+
+    public static IResourceBuilder<ProjectResource> WithReferenceAndWait(this IResourceBuilder<ProjectResource> project,
+            IResourceBuilder<ProjectResource> resource) =>
+        project
+            .WithReference(resource)
+            .WaitFor(resource);
+}

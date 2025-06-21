@@ -8,18 +8,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>9475c87c-1c00-4c6c-b263-dd57a8c9b665</UserSecretsId>
+	<LanguageVersion>preview</LanguageVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ConcertTracker.Api\ConcertTracker.Api.csproj" />
+    <ProjectReference Include="..\MusynqBinder.MigrationService\MusynqBinder.MigrationService.csproj" />
     <ProjectReference Include="..\MusynqBinder.Web\MusynqBinder.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.3.0" />
-    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.3.0" />
-    <PackageReference Include="Aspire.Hosting.Redis" Version="9.3.0" />
-    <PackageReference Include="Aspire.Keycloak.Authentication" Version="9.3.0-preview.1.25265.20" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.3.1" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.3.1" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="9.3.1" />
+    <PackageReference Include="Aspire.Keycloak.Authentication" Version="9.3.1-preview.1.25305.6" />
   </ItemGroup>
 
 </Project>

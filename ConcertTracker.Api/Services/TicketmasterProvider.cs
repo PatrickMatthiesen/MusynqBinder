@@ -1,4 +1,5 @@
-﻿using MusynqBinder.Shared.Models;
+﻿using ConcertTracker.Api.Data;
+using MusynqBinder.Shared.Models;
 using System.Text.Json;
 
 namespace ConcertTracker.Api.Services;
@@ -8,6 +9,7 @@ public class TicketmasterProvider(MusicDbContext context, HttpClient httpClient,
 
 
     public async Task<IEnumerable<Concert>> FetchConcertsAsync(string artistName) {
+        logger.LogInformation("Fetching concerts for artist: {ArtistName}", artistName);
         var attractionId = await GetAttractionIdAsync(artistName);
         if (string.IsNullOrEmpty(attractionId))
             return [];
@@ -84,6 +86,12 @@ public class TicketmasterProvider(MusicDbContext context, HttpClient httpClient,
             }
             var city = venues[0].GetProperty("city").GetProperty("name").GetString() ?? string.Empty;
             var country = venues[0].GetProperty("country").GetProperty("name").GetString() ?? string.Empty;
+            var attractions = ev.GetProperty("_embedded").GetProperty("attractions");
+            var artistNames = attractions.EnumerateArray().Select(a => a.GetProperty("name").GetString() ?? string.Empty).ToList();
+
+            var artists = context.Artists
+                .Where(a => artistNames.Contains(a.Name))
+                .ToList();
 
             var concert = new Concert
             {
@@ -91,13 +99,10 @@ public class TicketmasterProvider(MusicDbContext context, HttpClient httpClient,
                 SourceEventId = id,
                 TicketUrl = ticketUrl,
                 Date = date,
-                VenueName = venueName,
+                VenueName = venueName!,
                 City = city,
                 Country = country,
-                Artist = new Artist // extract so we can reuse?
-                {
-                    Name = ev.GetProperty("_embedded").GetProperty("attractions")[0].GetProperty("name").GetString() ?? string.Empty
-                }
+                Artists = artists
             };
 
             concerts.Add(concert);
