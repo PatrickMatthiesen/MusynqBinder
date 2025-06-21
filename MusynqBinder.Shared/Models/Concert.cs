@@ -3,7 +3,7 @@
 public class Concert {
     public int Id { get; set; }
     public int ArtistId { get; set; }
-    public Artist Artist { get; set; } = null!;
+    public List<Artist> Artists { get; set; } = [];
     public DateTimeOffset Date { get; set; }
     public string VenueName { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
