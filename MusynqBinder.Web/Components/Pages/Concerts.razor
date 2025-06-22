@@ -5,72 +5,97 @@
 @inject ILogger<Concerts> Logger
 @rendermode InteractiveServer
 
-<h3>Concerts</h3>
-<p>@RendererInfo.Name</p>
+<div class="max-w-5xl mx-auto">
+    <h1 class="text-3xl font-bold mb-4">Concerts</h1>
 
-<EditForm Model="artistName" OnSubmit="LoadConcerts" FormName="SearchArtists" >
-
-<input name="artistSearchInput" @bind="artistName" placeholder="Search artist..." />
-<button class="button" type="submit">Search</button>
-
-@if (concerts == null)
-{
-    <p><em>@placeholder</em></p>
-}
-else if (concerts is [])
-{
-    <p>No concerts found.</p>
-}
-else
-{
-    <p>Found @concerts.Count concerts for <strong>@artistName</strong>.</p>
-    <div class="flex flex-col">
-    @foreach (var concert in concerts)
-    {
-        <div style="display: flex;flex-direction: column;">
-            <p>@concert.Date.ToString("MMM", culture)</p>
-            <p>@concert.Date.ToString("dd")</p>
-        </div>
-
-    }
+    <div class="mb-6">
+        <EditForm Model="artistName" OnSubmit="LoadConcerts" FormName="SearchArtists" class="flex gap-2">
+            <div class="flex-grow">
+                <label for="artistSearchInput" class="sr-only">Search for an artist</label>
+                <input 
+                    name="artistSearchInput" 
+                    @bind="artistName" 
+                    placeholder="Search for artist..." 
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors" type="submit">
+                Search
+            </button>
+        </EditForm>
     </div>
-    
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Artist</th>
-                <th>Venue</th>
-                <th>City</th>
-                <th>Country</th>
-                <th>Tickets</th>
-            </tr>
-        </thead>
-        <tbody>
+
+    @if (concerts == null)
+    {
+        <div class="text-center py-12">
+            <p class="text-xl text-gray-600"><em>@placeholder</em></p>
+        </div>
+    }
+    else if (concerts is [])
+    {
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <p class="text-yellow-700">No concerts found for "@artistName".</p>
+        </div>
+    }
+    else
+    {
+        <div class="mb-4">
+            <p class="text-lg">Found <span class="font-medium">@concerts.Count</span> concerts for <span class="font-bold">@artistName</span></p>
+        </div>
+        
+        <div class="space-y-4">
             @foreach (var concert in concerts)
             {
-                <tr>
-                    <td class="text-nowrap">🗓️@concert.Date.ToString("ddd dd MMM ", CultureInfo.CreateSpecificCulture("en-US"))</td>
-                    <td>@string.Join(", ", GetTop5SimilarArtists(concert.Artists.Select(a => a.Name).ToList(), artistName))</td>
-                    <td>@concert.VenueName</td>
-                    <td>@concert.City</td>
-                    <td>@concert.Country</td>
-                    <td><a href="@concert.TicketUrl" target="_blank">Buy</a></td>
-                </tr>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                    <div class="flex">
+                        <!-- Date -->
+                        <div class="bg-blue-600 p-4 text-white flex flex-col items-center justify-center min-w-24">
+                            <span class="text-lg uppercase">@concert.Date.ToString("MMM", culture)</span>
+                            <span class="text-3xl font-bold">@concert.Date.ToString("dd")</span>
+                            <span class="text-sm">@concert.Date.ToString("yyyy")</span>
+                        </div>
+                        
+                        <!-- Concert details -->
+                        <div class="p-4 flex-grow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-bold text-lg">
+                                        @GetArtistString(concert.Artists.Select(a => a.Name).ToList(), artistName)
+                                    </h3>
+                                    <div class="mt-1 space-y-1">
+                                        <p class="text-gray-700">
+                                            <span class="font-medium">@concert.VenueName</span>
+                                        </p>
+                                        <p class="text-gray-600 text-sm">
+                                            @concert.City, @concert.Country
+                                        </p>
+                                        <p class="text-xs text-gray-500">
+                                            @concert.Date.ToString("dddd", culture) at @concert.Date.ToString("t", culture)
+                                        </p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <a href="@concert.TicketUrl" 
+                                       target="_blank"
+                                       class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors">
+                                        Buy Tickets
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             }
-        </tbody>
-    </table>
-}
-</EditForm>
+        </div>
+    }
+</div>
 
 @code {
     private string artistName = "Dabin";
-    private string placeholder = "^ search for your favorite artist";
+    private string placeholder = "Search for your favorite artist to see upcoming concerts";
     private CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
     private List<ConcertDto>? concerts;
 
-    private async Task LoadConcerts()
-    {
+    private async Task LoadConcerts() {
         concerts = null;
         placeholder = "Loading concerts...";
 
@@ -84,6 +109,18 @@ else
             Logger.LogError(ex, "Error loading concerts for {ArtistName}", artistName);
             placeholder = "Error loading concerts. Please try again later.";
         }
+    }
+
+    private MarkupString GetArtistString(List<string> names, string artistName) {
+        var topArtists = string.Join(", ", GetTop5SimilarArtists(names, artistName));
+
+        int remaining = names.Count - topArtists.Count();
+        if (remaining > 0)
+        {
+            // Add a span with styling for the "and X more" text
+            topArtists += $" <span class=\"text-gray-500 text-sm font-normal\">+{remaining} {(remaining == 1 ? "other" : "others")}</span>";
+        }
+        return new MarkupString(topArtists);
     }
 
     private List<string> GetTop5SimilarArtists(List<string> names, string searchString) {

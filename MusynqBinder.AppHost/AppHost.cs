@@ -33,7 +33,7 @@ var webDirectory = Path.GetFullPath(Path.Combine(builder.AppHostDirectory, "..",
 var command = builder.Environment.IsDevelopment()
     ? "bun build:css:dev"
     : "bun build:css";
-var tailwindCss = builder.AddExecutable("tailwindcss", "bun build:css:dev", webDirectory);
+var tailwindCss = builder.AddExecutable("tailwindcss", "bun", webDirectory, "build:css:dev");
 
 builder.AddProject<Projects.MusynqBinder_Web>("webfrontend")
     .WithEnvironment("Google:ClientId", googleClientId)
