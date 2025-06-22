@@ -90,8 +90,7 @@ app.MapGet("/api/artists/name/like/{searchString}", async (string searchString, 
     return await musicDbContext.ToListAsync();
 }).WithName("GetArtistsWithNameLike")
     .CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(20)))
-    .WithOpenApi()
-    .RequireAuthorization();
+    .WithOpenApi();
 
 app.Run();
 

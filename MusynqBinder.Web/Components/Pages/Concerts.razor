@@ -4,177 +4,255 @@
 @inject IHttpClientFactory httpClientFactory
 @inject ILogger<Concerts> Logger
 @rendermode InteractiveServer
+@implements IDisposable
 
 <div class="max-w-5xl mx-auto">
-    <h1 class="text-3xl font-bold mb-4">Concerts</h1>
+	<h1 class="text-3xl font-bold mb-4">Concerts</h1>
+	<div class="mb-6">
+		<EditForm Model="artistName" OnSubmit="LoadConcerts" FormName="SearchArtists" class="flex gap-2">
+			<InputAutoSuggest name="artistSearchInput"
+							  label="Search for an artist"
+							  placeholder="Search for artist..."
+							  value="@artistName"
+							  valueChanged="OnSearchInput"
+							  suggestions="@artistSuggestions"
+							  onSuggestionSelected="suggestionSelected" />
+			<button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors" type="submit">
+				Search
+			</button>
+		</EditForm>
+	</div>
 
-    <div class="mb-6">
-        <EditForm Model="artistName" OnSubmit="LoadConcerts" FormName="SearchArtists" class="flex gap-2">
-            <div class="flex-grow">
-                <label for="artistSearchInput" class="sr-only">Search for an artist</label>
-                <input 
-                    name="artistSearchInput" 
-                    @bind="artistName" 
-                    placeholder="Search for artist..." 
-                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-            </div>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors" type="submit">
-                Search
-            </button>
-        </EditForm>
-    </div>
+	@if (concerts == null)
+	{
+		<div class="text-center py-12">
+			<p class="text-xl text-gray-600"><em>@placeholder</em></p>
+		</div>
+	}
+	else if (concerts is [])
+	{
+		<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+			<p class="text-yellow-700">No concerts found for "@artistName".</p>
+		</div>
+	}
+	else
+	{
+		<div class="mb-4">
+			<p class="text-lg">Found <span class="font-medium">@concerts.Count</span> concerts for <span class="font-bold">@artistName</span></p>
+		</div>
 
-    @if (concerts == null)
-    {
-        <div class="text-center py-12">
-            <p class="text-xl text-gray-600"><em>@placeholder</em></p>
-        </div>
-    }
-    else if (concerts is [])
-    {
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-            <p class="text-yellow-700">No concerts found for "@artistName".</p>
-        </div>
-    }
-    else
-    {
-        <div class="mb-4">
-            <p class="text-lg">Found <span class="font-medium">@concerts.Count</span> concerts for <span class="font-bold">@artistName</span></p>
-        </div>
-        
-        <div class="space-y-4">
-            @foreach (var concert in concerts)
-            {
-                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                    <div class="flex">
-                        <!-- Date -->
-                        <div class="bg-blue-600 p-4 text-white flex flex-col items-center justify-center min-w-24">
-                            <span class="text-lg uppercase">@concert.Date.ToString("MMM", culture)</span>
-                            <span class="text-3xl font-bold">@concert.Date.ToString("dd")</span>
-                            <span class="text-sm">@concert.Date.ToString("yyyy")</span>
-                        </div>
-                        
-                        <!-- Concert details -->
-                        <div class="p-4 flex-grow">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-bold text-lg">
-                                        @{
-                                            var topArtists = GetTop5SimilarArtists(concert.Artists.Select(a => a.Name).ToList(), artistName);
-                                            @string.Join(", ", topArtists)
+		<div class="space-y-4">
+			@foreach (var concert in concerts)
+			{
+				<div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+					<div class="flex">
+						<!-- Date -->
+						<div class="bg-blue-600 p-4 text-white flex flex-col items-center justify-center min-w-24">
+							<span class="text-lg uppercase">@concert.Date.ToString("MMM", culture)</span>
+							<span class="text-3xl font-bold">@concert.Date.ToString("dd")</span>
+							<span class="text-sm">@concert.Date.ToString("yyyy")</span>
+						</div>
 
-                                            int remaining = concert.Artists.Count - topArtists.Count;
-                                            if (remaining > 0)
-                                            {
-                                                <span @onclick="() => ShowArtistModal(concert)"
-                                                      class="text-blue-500 cursor-pointer hover:underline text-sm ml-1">
-                                                    +@remaining @(remaining == 1 ? "other" : "others")
-                                                </span>
-                                            }
-                                        }
-                                    </h3>
-                                    <div class="mt-1 space-y-1">
-                                        <p class="text-gray-700">
-                                            <span class="font-medium">@concert.VenueName</span>
-                                        </p>
-                                        <p class="text-gray-600 text-sm">
-                                            @concert.City, @concert.Country
-                                        </p>
-                                        <p class="text-xs text-gray-500">
-                                            @concert.Date.ToString("dddd", culture) at @concert.Date.ToString("t", culture)
-                                        </p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <a href="@concert.TicketUrl" 
-                                       target="_blank"
-                                       class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors">
-                                        Buy Tickets
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
+						<!-- Concert details -->
+						<div class="p-4 flex-grow">
+							<div class="flex justify-between items-start">
+								<div>
+									<h3 class="font-bold text-lg">
+										@{
+											var topArtists = GetTop5SimilarArtists(concert.Artists.Select(a => a.Name).ToList(), artistName);
+											@string.Join(", ", topArtists)
+
+											int remaining = concert.Artists.Count - topArtists.Count;
+											if (remaining > 0)
+											{
+												<span @onclick="() => ShowArtistModal(concert)"
+													  class="text-blue-500 cursor-pointer hover:underline text-sm ml-1">
+													+@remaining @(remaining == 1 ? "other" : "others")
+												</span>
+											}
+										}
+									</h3>
+									<div class="mt-1 space-y-1">
+										<p class="text-gray-700">
+											<span class="font-medium">@concert.VenueName</span>
+										</p>
+										<p class="text-gray-600 text-sm">
+											@concert.City, @concert.Country
+										</p>
+										<p class="text-xs text-gray-500">
+											@concert.Date.ToString("dddd", culture) at @concert.Date.ToString("t", culture)
+										</p>
+									</div>
+								</div>
+								<div>
+									<a href="@concert.TicketUrl"
+									   target="_blank"
+									   class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors">
+										Buy Tickets
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+	}
 </div>
 
 <!-- Artist list modal -->
-<Modal IsVisible="isModalVisible" 
-       Title="All Artists" 
-       OnClose="@(() => isModalVisible = false)">
-    <div class="divide-y">
-        @if (selectedConcert != null)
-        {
-            @foreach (var artist in selectedConcert.Artists.OrderBy(a => a.Name))
-            {
-                <div class="py-2">@artist.Name</div>
-            }
-        }
-    </div>
+<Modal IsVisible="isModalVisible"
+	   Title="All Artists"
+	   OnClose="@(() => isModalVisible = false)">
+	<div class="divide-y">
+		@if (selectedConcert != null)
+		{
+			@foreach (var artist in selectedConcert.Artists.OrderBy(a => a.Name))
+			{
+				<div class="py-2">@artist.Name</div>
+			}
+		}
+	</div>
 </Modal>
 
 @code {
-    private string artistName = "Dabin";
-    private string placeholder = "Search for your favorite artist to see upcoming concerts";
-    private CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
-    private List<ConcertDto>? concerts;
-    private bool isModalVisible = false;
-    private ConcertDto? selectedConcert = null;
+	private string artistName = "Dabin";
+	private string placeholder = "Search for your favorite artist to see upcoming concerts";
+	private CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+	private List<ConcertDto>? concerts;
+	private bool isModalVisible = false;
+	private ConcertDto? selectedConcert = null;
 
-    private async Task LoadConcerts() {
-        concerts = null;
-        placeholder = "Loading concerts...";
+	// Autocomplete variables
+	private List<string>? artistSuggestions = new();
+	private bool showSuggestions = false;
+	private Timer? debounceTimer;
 
-        try
-        {
-            var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
-            concerts = await httpClient.GetFromJsonAsync<List<ConcertDto>>($"api/concerts/{Uri.EscapeDataString(artistName)}");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error loading concerts for {ArtistName}", artistName);
-            placeholder = "Error loading concerts. Please try again later.";
-        }
-    }
+	private async Task LoadConcerts() {
+		concerts = null;
+		placeholder = "Loading concerts...";
+		showSuggestions = false; // Hide suggestions when searching
 
-    private void ShowArtistModal(ConcertDto concert) {
-        selectedConcert = concert;
-        isModalVisible = true;
-    }
+		try
+		{
+			var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
+			concerts = await httpClient.GetFromJsonAsync<List<ConcertDto>>($"api/concerts/{Uri.EscapeDataString(artistName)}");
+		}
+		catch (Exception ex)
+		{
+			Logger.LogError(ex, "Error loading concerts for {ArtistName}", artistName);
+			placeholder = "Error loading concerts. Please try again later.";
+		}
+	}
 
-    private List<string> GetTop5SimilarArtists(List<string> names, string searchString) {
-        return names
-            .OrderBy(n => LevenshteinDistance(n, searchString))
-            .Take(5)
-            .ToList();
-    }
+	private Task suggestionSelected(string value)
+	{
+		artistName = value;
+		return LoadConcerts();
+	}
 
-    private int LevenshteinDistance(string a, string b) {
-        if (string.IsNullOrEmpty(a))
-            return b?.Length ?? 0;
-        if (string.IsNullOrEmpty(b))
-            return a.Length;
+	private void OnSearchInput(string newValue) {
+		artistName = newValue;
 
-        var costs = new int[b.Length + 1];
-        for (int j = 0; j < costs.Length; j++)
-            costs[j] = j;
+		// Reset the debounce timer
+		debounceTimer?.Dispose();
 
-        for (int i = 1; i <= a.Length; i++)
-        {
-            costs[0] = i;
-            int prevCost = i - 1;
-            for (int j = 1; j <= b.Length; j++)
-            {
-                int currentCost = costs[j];
-                costs[j] = Math.Min(
-                    Math.Min(costs[j] + 1, costs[j - 1] + 1),
-                    prevCost + (a[i - 1] == b[j - 1] ? 0 : 1));
-                prevCost = currentCost;
-            }
-        }
-        return costs[b.Length];
-    }
+		if (string.IsNullOrWhiteSpace(artistName) || artistName.Length < 2)
+		{
+			showSuggestions = false;
+			artistSuggestions?.Clear();
+			StateHasChanged();
+			return;
+		}
+
+		// Debounce the API call
+		debounceTimer = new Timer(async _ =>
+		{
+			await InvokeAsync(async () =>
+			{
+				await LoadArtistSuggestions(artistName);
+				StateHasChanged();
+			});
+		}, null, TimeSpan.FromMilliseconds(300), Timeout.InfiniteTimeSpan);
+	}
+
+	private async Task LoadArtistSuggestions(string searchString) {
+		try
+		{
+			var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
+			artistSuggestions = await httpClient.GetFromJsonAsync<List<string>>($"api/artists/name/like/{Uri.EscapeDataString(searchString)}");
+			showSuggestions = artistSuggestions?.Count > 0;
+		}
+		catch (Exception ex)
+		{
+			Logger.LogError(ex, "Error loading artist suggestions for {SearchString}", searchString);
+			artistSuggestions?.Clear();
+			showSuggestions = false;
+		}
+	}
+
+	private void OnInputFocus() {
+		if (artistSuggestions?.Count > 0 && !string.IsNullOrWhiteSpace(artistName))
+		{
+			showSuggestions = true;
+		}
+	}
+
+	private void OnKeyDown(KeyboardEventArgs e) {
+		if (e.Key == "Enter" && showSuggestions)
+		{
+			// Don't submit form if suggestions are visible
+			return;
+		}
+	}
+
+	private async Task OnInputBlur() {
+		// Delay hiding suggestions to allow for clicks
+		await Task.Delay(200);
+		showSuggestions = false;
+		StateHasChanged();
+	}
+
+
+	private void ShowArtistModal(ConcertDto concert) {
+		selectedConcert = concert;
+		isModalVisible = true;
+	}
+
+	private List<string> GetTop5SimilarArtists(List<string> names, string searchString) {
+		return names
+			.OrderBy(n => LevenshteinDistance(n, searchString))
+			.Take(5)
+			.ToList();
+	}
+
+	private int LevenshteinDistance(string a, string b) {
+		if (string.IsNullOrEmpty(a))
+			return b?.Length ?? 0;
+		if (string.IsNullOrEmpty(b))
+			return a.Length;
+
+		var costs = new int[b.Length + 1];
+		for (int j = 0; j < costs.Length; j++)
+			costs[j] = j;
+
+		for (int i = 1; i <= a.Length; i++)
+		{
+			costs[0] = i;
+			int prevCost = i - 1;
+			for (int j = 1; j <= b.Length; j++)
+			{
+				int currentCost = costs[j];
+				costs[j] = Math.Min(
+					Math.Min(costs[j] + 1, costs[j - 1] + 1),
+					prevCost + (a[i - 1] == b[j - 1] ? 0 : 1));
+				prevCost = currentCost;
+			}
+		}
+		return costs[b.Length];
+	}
+
+	public void Dispose() {
+		debounceTimer?.Dispose();
+	}
 }

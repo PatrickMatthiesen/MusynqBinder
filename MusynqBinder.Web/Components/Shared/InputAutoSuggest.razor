@@ -1,0 +1,65 @@
+﻿<div class="flex-grow relative">
+	<label for="@name" class="sr-only">@label</label>
+	<input name="@name"
+		   placeholder="@placeholder"
+		   @bind:get="value"
+		   @bind:set="updateValue"
+		   class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+		   autocomplete="off" />
+
+	@if (showSuggestions && suggestions?.Count > 0)
+	{
+		<div class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+			@foreach (var suggestion in suggestions)
+			{
+				<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
+					 @onmousedown="@(() => SelectSuggestion(suggestion))"
+					 @onmousedown:preventDefault="true">
+					@suggestion
+				</div>
+			}
+		</div>
+	}
+</div>
+
+@code {
+
+	[Parameter]
+	public string name { get; set; }
+
+	[Parameter]
+	public string label { get; set; }
+
+	[Parameter]
+	public string placeholder { get; set; }
+
+	[Parameter]
+	[EditorRequired]
+	public string value { get; set; } = string.Empty;
+
+	[Parameter]
+	[EditorRequired]
+	public EventCallback<string> valueChanged { get; set; }
+
+	[Parameter]
+	[EditorRequired]
+	public List<string> suggestions { get; set; } = new List<string>();
+
+	[Parameter]
+	public EventCallback<string> onSuggestionSelected { get; set; }
+
+	private bool showSuggestions = true;
+
+	private async Task updateValue(string newValue) {
+		value = newValue;
+		showSuggestions = true;
+		await valueChanged.InvokeAsync(newValue);
+	}
+
+	private async Task SelectSuggestion(string selectedValue) {
+		value = selectedValue;
+		showSuggestions = false;
+		suggestions.Clear();
+		await onSuggestionSelected.InvokeAsync(selectedValue);
+	}
+}
