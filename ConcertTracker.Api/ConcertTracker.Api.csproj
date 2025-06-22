@@ -33,4 +33,8 @@
     <ProjectReference Include="..\MusynqBinder.Shared\MusynqBinder.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Artists\" />
+  </ItemGroup>
+
 </Project>

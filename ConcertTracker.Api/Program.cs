@@ -2,16 +2,21 @@ using ConcertTracker.Api.Data;
 using ConcertTracker.Api.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Abstractions;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.Resource;
+using MusynqBinder.Shared.DTO;
 using MusynqBinder.Shared.Models;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddRedisClient(connectionName: "cache");
 
-//builder.AddRedisOutputCache(connectionName: "cache");
+builder.AddRedisOutputCache(connectionName: "cache");
 
 builder.AddNpgsqlDbContext<MusicDbContext>(connectionName: "musynqbinder");
 
@@ -39,7 +44,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-//app.UseOutputCache();
+app.UseOutputCache();
 
 var scopeRequiredByApi = app.Configuration["AzureAd:Scopes"] ?? "";
 var summaries = new[]
@@ -63,24 +68,33 @@ app.MapGet("/weatherforecast", (HttpContext httpContext) =>
 }).WithName("GetWeatherForecast")
     .WithOpenApi()
     .RequireAuthorization();
-    //.CacheOutput();
+//.CacheOutput();
 
 app.MapGet("/", () =>
 {
     return "Welcome to the concert service";
 });
 
-app.MapGet("/api/concerts/{artistName}", async (string artistName, HttpContext httpContext, ConcertService concertService) =>
+app.MapGet("/api/concerts/{artistName}", async (string artistName, ConcertService concertService) =>
 {
     var concerts = await concertService.GetConcertsAsync(artistName);
     return concerts;
 }).WithName("GetConcertsByArtist")
-    //.CacheOutput()
+    .CacheOutput(policy => policy.Expire(TimeSpan.FromHours(24)))
     .WithOpenApi();
+
+app.MapGet("/api/artists/name/like/{searchString}", async (string searchString, MusicDbContext context) =>
+{
+    var musicDbContext = context.Artists.Where(a => EF.Functions.ILike(a.Name, $"%{searchString}%"))
+        .Select(a => a.Name);
+    return await musicDbContext.ToListAsync();
+}).WithName("GetArtistsWithNameLike")
+    .CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(20)))
+    .WithOpenApi()
+    .RequireAuthorization();
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary) {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }

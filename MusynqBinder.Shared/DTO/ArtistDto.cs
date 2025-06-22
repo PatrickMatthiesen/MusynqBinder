@@ -10,5 +10,11 @@ public record ArtistDto {
     public int Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public List<ConcertDto> Concerts { get; init; } = [];
-    //public List<ArtistSourceDto> Sources { get; init; } = [];
+    public List<ArtistSourceDto> Sources { get; init; } = [];
+}
+
+public record ArtistSourceDto {
+    public int Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Url { get; init; } = string.Empty;
 }

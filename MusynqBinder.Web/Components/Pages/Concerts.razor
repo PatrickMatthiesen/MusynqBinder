@@ -59,7 +59,19 @@
                             <div class="flex justify-between items-start">
                                 <div>
                                     <h3 class="font-bold text-lg">
-                                        @GetArtistString(concert.Artists.Select(a => a.Name).ToList(), artistName)
+                                        @{
+                                            var topArtists = GetTop5SimilarArtists(concert.Artists.Select(a => a.Name).ToList(), artistName);
+                                            @string.Join(", ", topArtists)
+
+                                            int remaining = concert.Artists.Count - topArtists.Count;
+                                            if (remaining > 0)
+                                            {
+                                                <span @onclick="() => ShowArtistModal(concert)"
+                                                      class="text-blue-500 cursor-pointer hover:underline text-sm ml-1">
+                                                    +@remaining @(remaining == 1 ? "other" : "others")
+                                                </span>
+                                            }
+                                        }
                                     </h3>
                                     <div class="mt-1 space-y-1">
                                         <p class="text-gray-700">
@@ -89,11 +101,28 @@
     }
 </div>
 
+<!-- Artist list modal -->
+<Modal IsVisible="isModalVisible" 
+       Title="All Artists" 
+       OnClose="@(() => isModalVisible = false)">
+    <div class="divide-y">
+        @if (selectedConcert != null)
+        {
+            @foreach (var artist in selectedConcert.Artists.OrderBy(a => a.Name))
+            {
+                <div class="py-2">@artist.Name</div>
+            }
+        }
+    </div>
+</Modal>
+
 @code {
     private string artistName = "Dabin";
     private string placeholder = "Search for your favorite artist to see upcoming concerts";
     private CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
     private List<ConcertDto>? concerts;
+    private bool isModalVisible = false;
+    private ConcertDto? selectedConcert = null;
 
     private async Task LoadConcerts() {
         concerts = null;
@@ -111,16 +140,9 @@
         }
     }
 
-    private MarkupString GetArtistString(List<string> names, string artistName) {
-        var topArtists = string.Join(", ", GetTop5SimilarArtists(names, artistName));
-
-        int remaining = names.Count - topArtists.Count();
-        if (remaining > 0)
-        {
-            // Add a span with styling for the "and X more" text
-            topArtists += $" <span class=\"text-gray-500 text-sm font-normal\">+{remaining} {(remaining == 1 ? "other" : "others")}</span>";
-        }
-        return new MarkupString(topArtists);
+    private void ShowArtistModal(ConcertDto concert) {
+        selectedConcert = concert;
+        isModalVisible = true;
     }
 
     private List<string> GetTop5SimilarArtists(List<string> names, string searchString) {
