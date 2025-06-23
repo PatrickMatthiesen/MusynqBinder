@@ -14,7 +14,7 @@ namespace MusynqBinder.MigrationService;
 
 public class Worker<TContext>(
     IServiceProvider serviceProvider,
-    IHostApplicationLifetime hostApplicationLifetime) : BackgroundService where TContext : DbContext
+    ILogger<Worker<TContext>> logger) : BackgroundService where TContext : DbContext
 {
     public const string ActivitySourceName = "Migrations";
     private static readonly ActivitySource _activitySource = new(ActivitySourceName);
@@ -31,7 +31,7 @@ public class Worker<TContext>(
             await RunMigrationAsync(dbContext, cancellationToken);
 
             if (dbContext is MusicDbContext musicDbContext)
-                await SeedDataAsync(musicDbContext, cancellationToken);
+                await SeedDataAsync(musicDbContext, cancellationToken, logger);
         }
         catch (Exception ex)
         {
@@ -39,7 +39,7 @@ public class Worker<TContext>(
             throw;
         }
 
-        hostApplicationLifetime.StopApplication();
+        logger.LogInformation("Database migration completed for {dbContextName}.", typeof(TContext).FullName);
     }
 
     private static async Task RunMigrationAsync(TContext dbContext, CancellationToken cancellationToken)
@@ -52,10 +52,10 @@ public class Worker<TContext>(
         });
     }
 
-    private static async Task SeedDataAsync(MusicDbContext dbContext, CancellationToken cancellationToken)
+    private static async Task SeedDataAsync(MusicDbContext dbContext, CancellationToken cancellationToken, ILogger<Worker<TContext>> logger)
     {
         // Check if data already exists
-        if (await dbContext.Artists.AnyAsync(a => a.Name == "Dabin", cancellationToken))
+        if (await dbContext.Artists.AnyAsync())
         {
             Console.WriteLine("Seed data already exists, skipping...");
             return; // Data already seeded
