@@ -10,13 +10,32 @@
 	<h1 class="text-3xl font-bold mb-4">Concerts</h1>
 	<div class="mb-6">
 		<EditForm Model="artistName" OnSubmit="LoadConcerts" FormName="SearchArtists" class="flex gap-2">
-			<InputAutoSuggest name="artistSearchInput"
-							  label="Search for an artist"
-							  placeholder="Search for artist..."
-							  value="@artistName"
-							  valueChanged="OnSearchInput"
-							  suggestions="@artistSuggestions"
-							  onSuggestionSelected="suggestionSelected" />
+			<div class="flex-grow relative">
+				<label for="artistSearchInput" class="sr-only">Search for an artist</label>
+				<input type="search"
+					   name="artistSearchInput"
+					   placeholder="Search for artist..."
+					   @bind="searchString"
+					   @bind:after="OnSearchInput"
+					   @bind:event="oninput"
+					   @onfocusout="() => showSuggestions=false"
+					   class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+					   autocomplete="off" />
+
+				@if (showSuggestions && artistSuggestions?.Count > 0)
+				{
+					<div class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+						@foreach (var suggestion in artistSuggestions)
+						{
+							<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
+								 @onmousedown="@(() => suggestionSelected(suggestion))"
+								 @onmousedown:preventDefault="true">
+								@suggestion
+							</div>
+						}
+					</div>
+				}
+			</div>
 			<button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors" type="submit">
 				Search
 			</button>
@@ -59,7 +78,7 @@
 								<div>
 									<h3 class="font-bold text-lg">
 										@{
-											var topArtists = GetTop5SimilarArtists(concert.Artists.Select(a => a.Name).ToList(), artistName);
+											var topArtists = GetTop5SimilarArtists(concert.Artists.Select(a => a.Name).ToList(), "Dab");
 											@string.Join(", ", topArtists)
 
 											int remaining = concert.Artists.Count - topArtists.Count;
@@ -116,7 +135,8 @@
 </Modal>
 
 @code {
-	private string artistName = "Dabin";
+	private string searchString = "Dabin";
+	private string artistName = "";
 	private string placeholder = "Search for your favorite artist to see upcoming concerts";
 	private CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
 	private List<ConcertDto>? concerts;
@@ -129,9 +149,13 @@
 	private Timer? debounceTimer;
 
 	private async Task LoadConcerts() {
+		searchString = searchString.Trim();
+		if (searchString is "") return;
+		artistName = searchString;
 		concerts = null;
 		placeholder = "Loading concerts...";
 		showSuggestions = false; // Hide suggestions when searching
+
 
 		try
 		{
@@ -147,22 +171,22 @@
 
 	private Task suggestionSelected(string value)
 	{
-		artistName = value;
+		searchString = value;
 		return LoadConcerts();
 	}
 
-	private void OnSearchInput(string newValue) {
-		artistName = newValue;
+	private Task OnSearchInput() {
+		// artistName = newValue;
+		// return Task.CompletedTask;
 
 		// Reset the debounce timer
 		debounceTimer?.Dispose();
 
-		if (string.IsNullOrWhiteSpace(artistName) || artistName.Length < 2)
+		if (string.IsNullOrWhiteSpace(searchString) || searchString.Length <= 1)
 		{
 			showSuggestions = false;
 			artistSuggestions?.Clear();
-			StateHasChanged();
-			return;
+			return Task.CompletedTask;
 		}
 
 		// Debounce the API call
@@ -170,10 +194,12 @@
 		{
 			await InvokeAsync(async () =>
 			{
-				await LoadArtistSuggestions(artistName);
+				await LoadArtistSuggestions(searchString);
 				StateHasChanged();
 			});
 		}, null, TimeSpan.FromMilliseconds(300), Timeout.InfiniteTimeSpan);
+
+		return Task.CompletedTask;
 	}
 
 	private async Task LoadArtistSuggestions(string searchString) {
@@ -181,7 +207,7 @@
 		{
 			var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
 			artistSuggestions = await httpClient.GetFromJsonAsync<List<string>>($"api/artists/name/like/{Uri.EscapeDataString(searchString)}");
-			showSuggestions = artistSuggestions?.Count > 0;
+			showSuggestions = true;
 		}
 		catch (Exception ex)
 		{
@@ -210,7 +236,7 @@
 		// Delay hiding suggestions to allow for clicks
 		await Task.Delay(200);
 		showSuggestions = false;
-		StateHasChanged();
+		// StateHasChanged();
 	}
 
 
