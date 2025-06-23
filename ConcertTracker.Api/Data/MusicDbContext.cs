@@ -14,5 +14,12 @@ public class MusicDbContext(DbContextOptions<MusicDbContext> options) : DbContex
                 v => v.ToUniversalTime(), // Convert to UTC when saving
                 v => v // Keep as-is when reading (already UTC from DB)
             );
+
+        modelBuilder.Entity<Artist>()
+            .Property(e => e.LastUpdated)
+            .HasConversion(
+                v => v.ToUniversalTime(), // Convert to UTC when saving
+                v => v // Keep as-is when reading (already UTC from DB)
+            );
     }
 }

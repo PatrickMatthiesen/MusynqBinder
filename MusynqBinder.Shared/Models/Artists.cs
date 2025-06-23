@@ -6,7 +6,7 @@ public class Artist
     public string Name { get; set; } = string.Empty;
     public List<Concert> Concerts { get; set; } = [];
     public List<ArtistSource> Sources { get; set; } = [];
-    public DateTime LastUpdated { get; set; } = DateTime.MinValue;
+    public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.MinValue;
 }
 
 public class ArtistSource // 

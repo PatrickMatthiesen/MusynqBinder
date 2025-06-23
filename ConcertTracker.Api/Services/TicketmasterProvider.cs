@@ -36,6 +36,12 @@ public class TicketmasterProvider(MusicDbContext context, HttpClient httpClient,
         logger.LogInformation("Found attraction ID: {AttractionId} for artist: {ArtistName}", attractionId, artistName);
 
         var concerts = await GetEventsAsync(attractionId);
+
+        // could probably be done after the result has been streamed to the client
+        await context.Artists
+            .Where(a => EF.Functions.ILike(a.Name, artistName))
+            .ExecuteUpdateAsync(a => a.SetProperty(p => p.LastUpdated, DateTimeOffset.UtcNow));
+
         return concerts;
     }
 
@@ -145,7 +151,7 @@ public class TicketmasterProvider(MusicDbContext context, HttpClient httpClient,
                 Source = "Ticketmaster",
                 SourceEventId = eventData.Id,
                 TicketUrl = eventData.TicketUrl,
-                Date = eventData.Date.ToUniversalTime(), // Convert to UTC for PostgreSQL
+                Date = eventData.Date,
                 VenueName = eventData.VenueName,
                 City = eventData.City,
                 Country = eventData.Country,
