@@ -1,9 +1,14 @@
-﻿<div class="flex-grow relative">
+﻿@preservewhitespace true
+
+<div class="flex-grow relative">
 	<label for="@name" class="sr-only">@label</label>
-	<input name="@name"
+	<input 
+		   type="search"
+		   name="@name"
 		   placeholder="@placeholder"
-		   @bind:get="value"
-		   @bind:set="updateValue"
+		   @bind="searchString"
+		   @oninput="valueUpdated"
+		   @onfocusout="() => showSuggestions = false"
 		   class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 		   autocomplete="off" />
 
@@ -24,22 +29,23 @@
 
 @code {
 
+	private string searchString { get; set; } = string.Empty;
+
 	[Parameter]
+	[EditorRequired]
 	public string name { get; set; }
 
 	[Parameter]
+	[EditorRequired]
 	public string label { get; set; }
 
 	[Parameter]
+	[EditorRequired]
 	public string placeholder { get; set; }
 
 	[Parameter]
 	[EditorRequired]
-	public string value { get; set; } = string.Empty;
-
-	[Parameter]
-	[EditorRequired]
-	public EventCallback<string> valueChanged { get; set; }
+	public EventCallback<string> onInput { get; set; }
 
 	[Parameter]
 	[EditorRequired]
@@ -50,14 +56,17 @@
 
 	private bool showSuggestions = true;
 
-	private async Task updateValue(string newValue) {
-		value = newValue;
+	private async Task valueUpdated(ChangeEventArgs e) {
 		showSuggestions = true;
-		await valueChanged.InvokeAsync(newValue);
+		if (e.Value is not null and string value)
+		{
+			await onInput.InvokeAsync((string)e.Value);
+		}
 	}
 
 	private async Task SelectSuggestion(string selectedValue) {
-		value = selectedValue;
+		searchString = selectedValue;
+		// value = selectedValue;
 		showSuggestions = false;
 		suggestions.Clear();
 		await onSuggestionSelected.InvokeAsync(selectedValue);
