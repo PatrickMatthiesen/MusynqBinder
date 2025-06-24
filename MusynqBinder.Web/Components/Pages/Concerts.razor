@@ -78,7 +78,7 @@
 								<div>
 									<h3 class="font-bold text-lg">
 										@{
-											var topArtists = GetTop5SimilarArtists(concert.Artists.Select(a => a.Name).ToList(), "Dab");
+											var topArtists = GetTop5SimilarArtists(concert.Artists.Select(a => a.Name).ToList(), artistName);
 											@string.Join(", ", topArtists)
 
 											int remaining = concert.Artists.Count - topArtists.Count;
