@@ -1,0 +1,105 @@
+﻿@page "/artists/{artistName?}"
+@using MusynqBinder.Shared.DTO
+@inject IHttpClientFactory httpClientFactory
+@inject ILogger<Concerts> Logger
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<h3>Artists</h3>
+
+<InputAutoSuggest name="artistsSuggestions"
+				  label="Search for artists"
+				  placeholder="Search for an artist..."
+				  onInput="@OnInputHandler"
+				  onSuggestionSelected="@OnSuggestionSelected"
+				  suggestions="artistSuggestions" />
+
+<div class="mt-4">
+	@if (artist is not null)
+{
+		<p class="text-lg">Selected artist:</p>
+		<span class="font-bold">@artist.Name</span>
+		<span>@artist.Id</span>
+		<div>
+			@foreach (var concert in artist.Concerts)
+			{
+				<div>
+					<div>@concert.City</div>
+					<div>@concert.Country</div>
+					<div>@concert.Source</div>
+					<a href="@concert.TicketUrl" target="_blank">@concert.TicketUrl</a>
+				</div>
+			}
+		</div>
+	}
+	else
+	{
+		<p class="text-lg text-gray-500">No artist selected yet.</p>
+	}
+</div>
+
+@code {
+	private ArtistDto? artist;
+	private List<string> artistSuggestions = new();
+
+	[Parameter]
+	public string? artistName { get; set; }
+
+	protected override Task OnInitializedAsync() {
+		if (artistName is not null)
+		{
+			return OnSuggestionSelected(artistName);
+		}
+
+		return Task.CompletedTask;
+	}
+
+	private async Task OnInputHandler(string input) {
+		await LoadArtistSuggestions(input);
+	}
+
+	private async Task OnSuggestionSelected(string suggestion) {
+		try
+		{
+			var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
+			var result = await httpClient.GetAsync($"api/artists/{Uri.EscapeDataString(suggestion)}");
+			if (result is null || !result.IsSuccessStatusCode)
+			{
+				Logger.LogWarning("No artist found for suggestion: {Suggestion}", suggestion);
+				return;
+			}
+			var artistDto = await result.Content.ReadFromJsonAsync<ArtistDto>();
+			if (artistDto is null)
+			{
+				Logger.LogWarning("Artist not found for suggestion: {Suggestion}", suggestion);
+				return;
+			}
+			artist = artistDto;
+
+			NavigationManager.NavigateTo($"/artists/{Uri.EscapeDataString(artist.Name)}");
+		}
+		catch (Exception ex)
+		{
+			Logger.LogError(ex, "Error loading artist suggestions for {SearchString}", suggestion);
+		}
+	}
+
+	private async Task LoadArtistSuggestions(string searchString) {
+		try
+		{
+			var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
+			var result = await httpClient.GetFromJsonAsync<List<string>>($"api/artists/name/like/{Uri.EscapeDataString(searchString)}");
+			if (result is not null)
+			{
+				artistSuggestions = result;
+			}
+		}
+		catch (Exception ex)
+		{
+			Logger.LogError(ex, "Error loading artist suggestions for {SearchString}", searchString);
+			artistSuggestions?.Clear();
+		}
+	}
+
+
+}

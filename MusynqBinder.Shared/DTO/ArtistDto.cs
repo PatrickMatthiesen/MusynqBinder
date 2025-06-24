@@ -15,6 +15,7 @@ public record ArtistDto {
 
 public record ArtistSourceDto {
     public int Id { get; init; }
-    public string Name { get; init; } = string.Empty;
+    public string Source { get; init; } = string.Empty;
+    public string SourceArtistId { get; init; } = string.Empty;
     public string Url { get; init; } = string.Empty;
 }

@@ -92,6 +92,45 @@ app.MapGet("/api/artists/name/like/{searchString}", async (string searchString, 
     .CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(20)))
     .WithOpenApi();
 
+app.MapGet("/api/artists/{artistName}", async (string artistName, MusicDbContext context) =>
+{
+    var now = DateTimeOffset.UtcNow;
+    var artist = await context.Artists
+        .Include(a => a.Concerts.Where(c => c.Date > now))
+        .Include(a => a.Sources)
+        .FirstOrDefaultAsync(a => a.Name == artistName);
+
+    return artist switch
+    {
+        null => Results.NotFound(),
+        _ => Results.Ok(new ArtistDto
+        {
+            Id = artist.Id,
+            Name = artist.Name,
+            Concerts = [.. artist.Concerts.Select(c => new ConcertDto
+            {
+                Id = c.Id,
+                Date = c.Date,
+                VenueName = c.VenueName,
+                City = c.City,
+                Country = c.Country,
+                Source = c.Source,
+                SourceEventId = c.SourceEventId,
+                TicketUrl = c.TicketUrl
+            })],
+            Sources = [.. artist.Sources.Select(s => new ArtistSourceDto
+            {
+                Id = s.Id,
+                Source = s.Source,
+                SourceArtistId = s.SourceArtistId,
+                Url = s.Url
+            })]
+        })
+    };
+}).WithName("GetArtistById")
+    .CacheOutput(policy => policy.Expire(TimeSpan.FromHours(24)))
+    .WithOpenApi();
+
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary) {
