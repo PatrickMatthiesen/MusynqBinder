@@ -128,7 +128,7 @@
 		{
 			@foreach (var artist in selectedConcert.Artists.OrderBy(a => a.Name))
 			{
-				<div class="py-2">@artist.Name</div>
+				<div class="py-2"><a href="/artists/@artist.Name">@artist.Name</a></div>
 			}
 		}
 	</div>

@@ -24,7 +24,7 @@
 
 @code {
 	[Parameter]
-	public bool IsVisible { get; set; }
+	public bool IsVisible { get; set; } = false;
 
 	[Parameter]
 	public string Title { get; set; } = "Modal Title";
@@ -36,6 +36,7 @@
 	public RenderFragment ChildContent { get; set; } = default!;
 
 	private Task CloseModal() {
+		IsVisible = false;
 		return OnClose.InvokeAsync();
 	}
 }

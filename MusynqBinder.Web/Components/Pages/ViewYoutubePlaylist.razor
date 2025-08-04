@@ -1,0 +1,38 @@
+﻿@page "/youtube-playlists"
+@inject Services.YouTubeApiService YouTubeApiService
+@using Google.Apis.YouTube.v3.Data
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@*TODO: find a way to only allow google authenticated users*@
+
+<h3>Your YouTube Playlists</h3>
+
+@if (playlists == null)
+{
+    <p>Loading...</p>
+}
+else if (!playlists.Any())
+{
+    <p>No playlists found or not authenticated with Google.</p>
+}
+else
+{
+    <ul>
+        @foreach (var playlist in playlists)
+        {
+            <li>
+                <strong>@playlist.Snippet.Title</strong>
+                <br />
+                @playlist.Snippet.Description
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<Playlist> playlists;
+
+    protected override async Task OnInitializedAsync() {
+        playlists = await YouTubeApiService.GetUserPlaylistsAsync();
+    }
+}

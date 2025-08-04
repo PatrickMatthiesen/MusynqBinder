@@ -11,7 +11,7 @@
 				  label="Search for artists"
 				  placeholder="Search for an artist..."
 				  onInput="@OnInputHandler"
-				  onSuggestionSelected="@OnSuggestionSelected"
+				  onSuggestionSelected="@((s) => OnSuggestionSelected(s))"
 				  suggestions="artistSuggestions" />
 
 <div class="mt-4">
@@ -48,7 +48,7 @@
 	protected override Task OnInitializedAsync() {
 		if (artistName is not null)
 		{
-			return OnSuggestionSelected(artistName);
+			return OnSuggestionSelected(artistName, false);
 		}
 
 		return Task.CompletedTask;
@@ -58,7 +58,7 @@
 		await LoadArtistSuggestions(input);
 	}
 
-	private async Task OnSuggestionSelected(string suggestion) {
+	private async Task OnSuggestionSelected(string suggestion, bool navigate = true) {
 		try
 		{
 			var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
@@ -76,7 +76,8 @@
 			}
 			artist = artistDto;
 
-			NavigationManager.NavigateTo($"/artists/{Uri.EscapeDataString(artist.Name)}");
+			if (navigate)
+				NavigationManager.NavigateTo($"/artists/{Uri.EscapeDataString(artist.Name)}");
 		}
 		catch (Exception ex)
 		{

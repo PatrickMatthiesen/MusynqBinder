@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MusynqBinder.Web.Components;
 using MusynqBinder.Web.Components.Account;
 using MusynqBinder.Web.Data;
-using Google.Apis.Auth.AspNetCore3;
+using MusynqBinder.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +20,7 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+builder.Services.AddScoped<YouTubeApiService>();
 
 // builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://concerttracker-api") });
 builder.Services.AddHttpClient("ConcertTrackerApi", client =>
@@ -30,10 +33,33 @@ builder.Services.AddAuthentication(options =>
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     })
-    .AddGoogleOpenIdConnect(options =>
+    .AddGoogle(options =>
     {
         options.ClientId = builder.Configuration["Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId not configured.");
         options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret not configured.");
+        options.SaveTokens = true;
+        var oldOnRedirect = options.Events.OnRedirectToAuthorizationEndpoint;
+        options.Events.OnRedirectToAuthorizationEndpoint = context =>
+        {
+            context.Properties.SetParameter("access_type", "offline");
+            return oldOnRedirect(context);
+        };
+        options.Scope.Add("https://www.googleapis.com/auth/youtube.readonly");
+
+        options.Events.OnCreatingTicket = ctx =>
+        {
+            List<AuthenticationToken> tokens = ctx.Properties.GetTokens().ToList();
+
+            tokens.Add(new AuthenticationToken()
+            {
+                Name = "TicketCreated",
+                Value = DateTime.UtcNow.ToString()
+            });
+
+            ctx.Properties.StoreTokens(tokens);
+
+            return Task.CompletedTask;
+        };
     })
     .AddIdentityCookies();
 
