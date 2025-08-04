@@ -1,0 +1,6 @@
+{
+  "appHostPath": "../MusynqBinder.AppHost/MusynqBinder.AppHost.csproj",
+  "features": {
+    "deployCommandEnabled": "true"
+  }
+}
