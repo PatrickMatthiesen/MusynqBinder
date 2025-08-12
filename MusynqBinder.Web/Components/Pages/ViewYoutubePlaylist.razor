@@ -2,6 +2,7 @@
 @inject Services.YouTubeApiService YouTubeApiService
 @using Google.Apis.YouTube.v3.Data
 @using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveServer
 @attribute [Authorize]
 @*TODO: find a way to only allow google authenticated users*@
 
@@ -20,19 +21,95 @@ else
     <ul>
         @foreach (var playlist in playlists)
         {
-            <li>
+            <li @key="@(playlist.Id)" class="flex">
                 <strong>@playlist.Snippet.Title</strong>
                 <br />
                 @playlist.Snippet.Description
+                <button @onclick="() => showPlaylistItems(playlist)"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-2 rounded-lg transition-colors">
+                    View
+                </button>
             </li>
         }
     </ul>
+
+    <!-- Artist list modal -->
+    <Modal IsVisible="isModalVisible"
+           Title="@("Playlist: " + modalPlaylist?.Snippet.Title)"
+           OnClose="@(() => isModalVisible = false)">
+        <div class="divide-y">
+            @if (modalPlaylist is not null)
+            {
+                <iframe id="ytplayer" type="text/html" width="640" height="360"
+                        src="@($"https://www.youtube.com/embed/{itemToPlay.ContentDetails.VideoId ?? "dQw4w9WgXcQ"}?autoplay=1")"
+                        frameborder="0"></iframe>
+            }
+
+            @if (modalItems is not null)
+            {
+                @foreach (var video in modalItems)
+                {
+                    <div @key="video.Id" class="py-2" @onclick="() => itemToPlay = video">
+                        @video.Snippet.Title
+                        <br />
+                        @video.Id
+                        <br />
+                        @video.ContentDetails.VideoId
+                    </div>
+                }
+            }
+        </div>
+    </Modal>
 }
+
 
 @code {
     private List<Playlist> playlists;
 
+    private Dictionary<string, List<PlaylistItem>> playlistContent = [];
+    private List<PlaylistItem> modalItems = [];
+    private Playlist modalPlaylist;
+    private bool isModalVisible = false;
+    private PlaylistItem? itemToPlay;
+
     protected override async Task OnInitializedAsync() {
-        playlists = await YouTubeApiService.GetUserPlaylistsAsync();
+        playlists = new List<Playlist>();
+        await foreach (Playlist p in YouTubeApiService.GetUserPlaylistsAsync())
+        {
+            playlists.Add(p);
+        }
+    }
+
+    private async void showPlaylistItems(Playlist playlist)
+    {
+        var exists = playlistContent.TryGetValue(playlist.Id, out var playlistItems);
+        if (exists)
+        {
+            modalPlaylist = playlist;
+            modalItems = playlistItems!;
+            isModalVisible = true;
+            return;
+        }
+
+        modalItems = new List<PlaylistItem>();
+
+        isModalVisible = true;
+        modalPlaylist = playlist;
+        // Fetch the playlist items
+        var items = YouTubeApiService.GetUserPlaylistItemsAsync(playlist.Id);
+        await foreach (var item in items)
+        {
+            if (modalItems is [])
+            {
+                itemToPlay = item;
+            }
+            modalItems.Add(item);
+            StateHasChanged();
+        }
+        // Cache the items for future use
+        if (playlist.ContentDetails.ItemCount == modalItems.Count)
+        {
+            playlistContent[playlist.Id] = modalItems;
+        }
     }
 }

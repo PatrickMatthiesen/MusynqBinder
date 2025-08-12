@@ -9,7 +9,7 @@ var googleClientSecret = builder.AddParameter("Google-OAuth-ClientSecret", secre
 var database = builder.AddPostgres("database")
     //.WithDataVolume()
     //.WithLifetime(ContainerLifetime.Persistent)
-    .WithHostPort(65432);
+    .WithHostPort(6543);
 
 var musicDatabase = database.AddDatabase("musynqbinder");
 var identityDatabase = database.AddDatabase("identitydb");

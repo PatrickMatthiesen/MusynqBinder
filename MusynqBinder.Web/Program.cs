@@ -38,25 +38,21 @@ builder.Services.AddAuthentication(options =>
         options.ClientId = builder.Configuration["Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId not configured.");
         options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret not configured.");
         options.SaveTokens = true;
-        var oldOnRedirect = options.Events.OnRedirectToAuthorizationEndpoint;
+        options.Scope.Add("https://www.googleapis.com/auth/youtube.readonly");
+
+        options.AccessType = "offline";
+
+        // Force consent screen to ensure refresh token is provided
+        var oldOnRedirectToAuthorizationEndpoint = options.Events.OnRedirectToAuthorizationEndpoint;
         options.Events.OnRedirectToAuthorizationEndpoint = context =>
         {
-            context.Properties.SetParameter("access_type", "offline");
-            return oldOnRedirect(context);
+            context.RedirectUri += "&prompt=consent";
+            return oldOnRedirectToAuthorizationEndpoint(context);
         };
-        options.Scope.Add("https://www.googleapis.com/auth/youtube.readonly");
 
         options.Events.OnCreatingTicket = ctx =>
         {
             List<AuthenticationToken> tokens = ctx.Properties.GetTokens().ToList();
-
-            tokens.Add(new AuthenticationToken()
-            {
-                Name = "TicketCreated",
-                Value = DateTime.UtcNow.ToString()
-            });
-
-            ctx.Properties.StoreTokens(tokens);
 
             return Task.CompletedTask;
         };
