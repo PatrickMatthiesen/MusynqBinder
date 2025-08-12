@@ -6,71 +6,179 @@
 @attribute [Authorize]
 @*TODO: find a way to only allow google authenticated users*@
 
-<h3>Your YouTube Playlists</h3>
-
-@if (playlists == null)
-{
-    <p>Loading...</p>
-}
-else if (!playlists.Any())
-{
-    <p>No playlists found or not authenticated with Google.</p>
-}
-else
-{
-    <ul>
-        @foreach (var playlist in playlists)
-        {
-            <li @key="@(playlist.Id)" class="flex">
-                <strong>@playlist.Snippet.Title</strong>
-                <br />
-                @playlist.Snippet.Description
-                <button @onclick="() => showPlaylistItems(playlist)"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-2 rounded-lg transition-colors">
-                    View
-                </button>
-            </li>
-        }
-    </ul>
-
-    <!-- Artist list modal -->
-    <Modal IsVisible="isModalVisible"
-           Title="@("Playlist: " + modalPlaylist?.Snippet.Title)"
-           OnClose="@(() => isModalVisible = false)">
-        <div class="divide-y">
-            @if (modalPlaylist is not null)
-            {
-                <iframe id="ytplayer" type="text/html" width="640" height="360"
-                        src="@($"https://www.youtube.com/embed/{itemToPlay.ContentDetails.VideoId ?? "dQw4w9WgXcQ"}?autoplay=1")"
-                        frameborder="0"></iframe>
-            }
-
-            @if (modalItems is not null)
-            {
-                @foreach (var video in modalItems)
+<div class="max-w-7xl mx-auto p-4">
+    <h1 class="text-xl font-bold text-gray-900 mb-2">Your YouTube Playlists</h1>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(150vh)] lg:h-[calc(100vh)]">
+        <!-- Left Pane: Playlists -->
+        <div class="bg-white rounded-lg shadow border overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Your Playlists</h2>
+            </div>
+            
+            <div class="overflow-y-auto h-full">
+                @if (playlists == null)
                 {
-                    <div @key="video.Id" class="py-2" @onclick="() => itemToPlay = video">
-                        @video.Snippet.Title
-                        <br />
-                        @video.Id
-                        <br />
-                        @video.ContentDetails.VideoId
+                    <div class="flex items-center justify-center h-32">
+                        <div class="text-center">
+                            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <p class="mt-2 text-gray-600">Loading playlists...</p>
+                        </div>
                     </div>
                 }
+                else if (playlists.Count == 0)
+                {
+                    <div class="p-4">
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <p class="text-yellow-700">No playlists found or not authenticated with Google.</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="divide-y divide-gray-200">
+                        @foreach (var playlist in playlists)
+                        {
+                            <div @key="@playlist.Id" 
+                                 class="p-4 hover:bg-gray-50 cursor-pointer transition-colors @(selectedPlaylist?.Id == playlist.Id ? "bg-blue-50 border-r-4 border-r-blue-500" : "")"
+                                 @onclick="() => SelectPlaylist(playlist)">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        @if (playlist.Snippet.Thumbnails?.Default__?.Url != null)
+                                        {
+                                            <img src="@playlist.Snippet.Thumbnails.Default__.Url" 
+                                                 alt="@playlist.Snippet.Title"
+                                                 class="w-16 h-12 object-cover rounded" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-16 h-12 bg-gray-200 rounded flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                                                </svg>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="font-medium text-gray-900 truncate">@playlist.Snippet.Title</h3>
+                                        <p class="text-sm text-gray-500 mt-1 line-clamp-2">@playlist.Snippet.Description</p>
+                                        <p class="text-xs text-gray-400 mt-2">@playlist.ContentDetails.ItemCount videos</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right Pane: Selected Playlist Content -->
+        <div class="bg-white rounded-lg shadow border overflow-hidden">
+            @if (selectedPlaylist is null)
+            {
+                <div class="flex items-center justify-center h-full">
+                    <div class="text-center text-gray-500">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm8 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
+                        </svg>
+                        <p class="text-lg">Select a playlist to view its content</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="flex flex-col h-full">
+                    <!-- Playlist Header -->
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">@selectedPlaylist.Snippet.Title</h2>
+                        <p class="text-sm text-gray-600 mt-1">@selectedPlaylist.ContentDetails.ItemCount videos</p>
+                    </div>
+
+                    <!-- Video Player -->
+                    @if (currentVideo != null)
+                    {
+                        <div class="bg-black">
+                            <iframe class="w-full aspect-video" 
+                                    src="@($"https://www.youtube.com/embed/{currentVideo.ContentDetails.VideoId}?autoplay=1")"
+                                    frameborder="0" 
+                                    allowfullscreen>
+                            </iframe>
+                        </div>
+                        <div class="p-4 border-b border-gray-200">
+                            <h3 class="font-medium text-gray-900">@currentVideo.Snippet.Title</h3>
+                            <p class="text-sm text-gray-600 mt-1">@currentVideo.Snippet.VideoOwnerChannelTitle</p>
+                        </div>
+                    }
+
+                    <!-- Video List -->
+                    <div class="flex-1 overflow-y-auto">
+                        @if (isLoadingPlaylistItems)
+                        {
+                            <div class="flex items-center justify-center p-8">
+                                <div class="text-center">
+                                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                    <p class="mt-2 text-sm text-gray-600">Loading videos...</p>
+                                </div>
+                            </div>
+                        }
+                        else if (selectedPlaylistItems?.Count > 0)
+                        {
+                            <div class="divide-y divide-gray-200">
+                                @foreach (var video in selectedPlaylistItems)
+                                {
+                                    <div @key="video.Id"
+                                         class="p-3 hover:bg-gray-50 cursor-pointer transition-colors @(currentVideo?.Id == video.Id ? "bg-blue-50" : "")"
+                                         @onclick="() => PlayVideo(video)">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="flex-shrink-0">
+                                                @if (video.Snippet.Thumbnails?.Default__?.Url != null)
+                                                {
+                                                    <img src="@video.Snippet.Thumbnails.Default__.Url"
+                                                         alt="@video.Snippet.Title"
+                                                         class="w-16 h-12 object-cover rounded" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="w-16 h-12 bg-gray-200 rounded flex items-center justify-center">
+                                                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M8 5v14l11-7z"/>
+                                                        </svg>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <h4 class="text-sm font-medium text-gray-900 line-clamp-2">@video.Snippet.Title</h4>
+                                                <p class="text-xs text-gray-500 mt-1">@video.Snippet.VideoOwnerChannelTitle</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
             }
         </div>
-    </Modal>
-}
+    </div>
+</div>
 
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
 
 @code {
     private List<Playlist> playlists;
-
     private Dictionary<string, List<PlaylistItem>> playlistContent = [];
-    private List<PlaylistItem> modalItems = [];
-    private Playlist modalPlaylist;
-    private bool isModalVisible = false;
-    private PlaylistItem? itemToPlay;
+    
+    private Playlist? selectedPlaylist;
+    private List<PlaylistItem>? selectedPlaylistItems;
+    private PlaylistItem? currentVideo;
+    private bool isLoadingPlaylistItems = false;
 
     protected override async Task OnInitializedAsync() {
         playlists = new List<Playlist>();
@@ -80,36 +188,51 @@ else
         }
     }
 
-    private async void showPlaylistItems(Playlist playlist)
+    private async Task SelectPlaylist(Playlist playlist)
     {
-        var exists = playlistContent.TryGetValue(playlist.Id, out var playlistItems);
+        selectedPlaylist = playlist;
+        currentVideo = null;
+        
+        // Check if we already have the playlist items cached
+        var exists = playlistContent.TryGetValue(playlist.Id, out var cachedItems);
         if (exists)
         {
-            modalPlaylist = playlist;
-            modalItems = playlistItems!;
-            isModalVisible = true;
+            selectedPlaylistItems = cachedItems!;
+            if (selectedPlaylistItems.Count > 0)
+            {
+                currentVideo = selectedPlaylistItems.First();
+            }
             return;
         }
 
-        modalItems = new List<PlaylistItem>();
+        // Load playlist items
+        isLoadingPlaylistItems = true;
+        selectedPlaylistItems = new List<PlaylistItem>();
+        StateHasChanged();
 
-        isModalVisible = true;
-        modalPlaylist = playlist;
-        // Fetch the playlist items
         var items = YouTubeApiService.GetUserPlaylistItemsAsync(playlist.Id);
         await foreach (var item in items)
         {
-            if (modalItems is [])
+            if (currentVideo == null)
             {
-                itemToPlay = item;
+                currentVideo = item;
             }
-            modalItems.Add(item);
+            selectedPlaylistItems.Add(item);
             StateHasChanged();
         }
+
         // Cache the items for future use
-        if (playlist.ContentDetails.ItemCount == modalItems.Count)
+        if (playlist.ContentDetails.ItemCount == selectedPlaylistItems.Count)
         {
-            playlistContent[playlist.Id] = modalItems;
+            playlistContent[playlist.Id] = selectedPlaylistItems;
         }
+
+        isLoadingPlaylistItems = false;
+        StateHasChanged();
+    }
+
+    private void PlayVideo(PlaylistItem video)
+    {
+        currentVideo = video;
     }
 }
