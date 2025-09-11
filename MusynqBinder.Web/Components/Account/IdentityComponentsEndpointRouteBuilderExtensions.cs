@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using MusynqBinder.Web.Components.Account.Pages;
 using MusynqBinder.Web.Components.Account.Pages.Manage;
-using MusynqBinder.Web.Data;
+using MusynqBinder.Data.Identity;
 
 namespace Microsoft.AspNetCore.Routing;
 

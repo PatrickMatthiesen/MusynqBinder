@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MusynqBinder.Web.Components;
 using MusynqBinder.Web.Components.Account;
-using MusynqBinder.Web.Data;
+using MusynqBinder.Data.Identity;
 using MusynqBinder.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);

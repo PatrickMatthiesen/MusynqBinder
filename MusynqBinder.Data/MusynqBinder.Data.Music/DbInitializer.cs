@@ -1,4 +1,4 @@
-﻿namespace ConcertTracker.Api.Data;
+﻿namespace MusynqBinder.Data.Music;
 
 public static class DbInitializer {
     public static void Initialize(MusicDbContext context) {

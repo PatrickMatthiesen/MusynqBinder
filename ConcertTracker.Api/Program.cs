@@ -1,4 +1,4 @@
-using ConcertTracker.Api.Data;
+using MusynqBinder.Data.Music;
 using ConcertTracker.Api.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

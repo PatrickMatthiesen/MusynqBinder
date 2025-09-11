@@ -6,7 +6,7 @@ using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
-using MusynqBinder.Web.Data;
+using MusynqBinder.Data.Identity;
 using static Google.Apis.Requests.BatchRequest;
 
 namespace MusynqBinder.Web.Services;

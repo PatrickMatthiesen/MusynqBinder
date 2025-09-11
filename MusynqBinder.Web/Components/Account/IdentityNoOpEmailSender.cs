@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using MusynqBinder.Web.Data;
+using MusynqBinder.Data.Identity;
 
 namespace MusynqBinder.Web.Components.Account;
 

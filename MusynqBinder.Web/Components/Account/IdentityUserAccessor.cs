@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-using MusynqBinder.Web.Data;
+using MusynqBinder.Data.Identity;
 
 namespace MusynqBinder.Web.Components.Account;
 

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using MusynqBinder.Web.Data;
+using MusynqBinder.Data.Identity;
 
 namespace MusynqBinder.Web.Components.Account;
 

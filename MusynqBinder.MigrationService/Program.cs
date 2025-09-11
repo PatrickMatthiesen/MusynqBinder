@@ -1,9 +1,8 @@
-using ConcertTracker.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MusynqBinder.MigrationService;
-using MusynqBinder.Web.Data;
-using StackExchange.Redis;
+using MusynqBinder.Data.Identity;
+using MusynqBinder.Data.Music;
 
 var builder = Host.CreateApplicationBuilder(args);
 

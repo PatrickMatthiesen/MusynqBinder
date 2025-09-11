@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 using OpenTelemetry.Trace;
 
-using MusynqBinder.Web.Data;
+using MusynqBinder.Data.Identity;
 using MusynqBinder.Shared.Models;
-using ConcertTracker.Api.Data;
+using MusynqBinder.Data.Music;
 
 namespace MusynqBinder.MigrationService;
 
@@ -52,8 +52,7 @@ public class Worker<TContext>(
         });
     }
 
-    private static async Task SeedDataAsync(MusicDbContext dbContext, CancellationToken cancellationToken, ILogger<Worker<TContext>> logger)
-    {
+    private static async Task SeedDataAsync(MusicDbContext dbContext, CancellationToken cancellationToken, ILogger<Worker<TContext>> logger) {
         // Check if data already exists
         if (await dbContext.Artists.AnyAsync())
         {

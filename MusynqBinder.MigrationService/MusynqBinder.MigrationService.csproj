@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -9,14 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.4.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.7" />
+	<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.4.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ConcertTracker.Api\ConcertTracker.Api.csproj" />
+    <ProjectReference Include="..\MusynqBinder.Data\MusynqBinder.Data.Identity\MusynqBinder.Data.Identity.csproj" />
+    <ProjectReference Include="..\MusynqBinder.Data\MusynqBinder.Data.Music\MusynqBinder.Data.Music.csproj" />
     <ProjectReference Include="..\MusynqBinder.ServiceDefaults\MusynqBinder.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\MusynqBinder.Web\MusynqBinder.Web.csproj" />
   </ItemGroup>
 </Project>

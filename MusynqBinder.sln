@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36121.58
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11010.61 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.AppHost", "MusynqBinder.AppHost\MusynqBinder.AppHost.csproj", "{B1CD4B6B-7AAA-46A9-97C1-C00AE523D04F}"
 EndProject
@@ -16,6 +16,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.Web", "MusynqBinder.Web\MusynqBinder.Web.csproj", "{99ECF385-9BB3-44E0-A2C3-F84940102A6C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.MigrationService", "MusynqBinder.MigrationService\MusynqBinder.MigrationService.csproj", "{62D0E0C1-9805-CE98-03A2-F3A752344E24}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MusinqBinder.Data", "MusinqBinder.Data", "{8AD96C39-B6C2-4727-BD52-B4C792FED146}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.Data.Music", "MusynqBinder.Data\MusynqBinder.Data.Music\MusynqBinder.Data.Music.csproj", "{26ABFD91-709C-46E3-95CA-AF8662F10709}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusynqBinder.Data.Identity", "MusynqBinder.Data\MusynqBinder.Data.Identity\MusynqBinder.Data.Identity.csproj", "{52C3A88E-A1B2-4E9E-85D3-3359093AF284}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -111,9 +117,37 @@ Global
 		{62D0E0C1-9805-CE98-03A2-F3A752344E24}.Release|x64.Build.0 = Release|Any CPU
 		{62D0E0C1-9805-CE98-03A2-F3A752344E24}.Release|x86.ActiveCfg = Release|Any CPU
 		{62D0E0C1-9805-CE98-03A2-F3A752344E24}.Release|x86.Build.0 = Release|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Debug|x64.Build.0 = Debug|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Debug|x86.Build.0 = Debug|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Release|x64.ActiveCfg = Release|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Release|x64.Build.0 = Release|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Release|x86.ActiveCfg = Release|Any CPU
+		{26ABFD91-709C-46E3-95CA-AF8662F10709}.Release|x86.Build.0 = Release|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Debug|x64.Build.0 = Debug|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Debug|x86.Build.0 = Debug|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Release|x64.ActiveCfg = Release|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Release|x64.Build.0 = Release|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Release|x86.ActiveCfg = Release|Any CPU
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{26ABFD91-709C-46E3-95CA-AF8662F10709} = {8AD96C39-B6C2-4727-BD52-B4C792FED146}
+		{52C3A88E-A1B2-4E9E-85D3-3359093AF284} = {8AD96C39-B6C2-4727-BD52-B4C792FED146}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3E8A2502-8D1C-48B2-AE3A-538A744D87F9}

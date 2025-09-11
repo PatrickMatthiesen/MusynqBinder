@@ -1,26 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.4.0" />
-
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.4.2" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>9475c87c-1c00-4c6c-b263-dd57a8c9b665</UserSecretsId>
-	<LanguageVersion>preview</LanguageVersion>
+    <LanguageVersion>preview</LanguageVersion>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\ConcertTracker.Api\ConcertTracker.Api.csproj" />
     <ProjectReference Include="..\MusynqBinder.MigrationService\MusynqBinder.MigrationService.csproj" />
     <ProjectReference Include="..\MusynqBinder.Web\MusynqBinder.Web.csproj" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.4.0" />
-    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.4.0" />
-    <PackageReference Include="Aspire.Hosting.Redis" Version="9.4.0" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.4.2" />
+    <PackageReference Include="Aspire.Hosting.Docker" Version="9.4.1-preview.1.25408.4" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.4.2" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="9.4.2" />
   </ItemGroup>
-
 </Project>

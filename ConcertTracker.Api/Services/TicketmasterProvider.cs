@@ -1,4 +1,4 @@
-﻿using ConcertTracker.Api.Data;
+﻿using MusynqBinder.Data.Music;
 using Microsoft.EntityFrameworkCore;
 using MusynqBinder.Shared.Models;
 using System.Linq;
