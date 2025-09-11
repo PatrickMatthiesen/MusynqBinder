@@ -215,7 +215,7 @@
 </style>
 
 @code {
-    private List<Playlist> playlists;
+    private List<Playlist> playlists = [];
     private Dictionary<string, List<PlaylistItem>> playlistContent = [];
     
     private Playlist? selectedPlaylist;
@@ -224,7 +224,6 @@
     private bool isLoadingPlaylistItems = false;
 
     protected override async Task OnInitializedAsync() {
-        playlists = new List<Playlist>();
         await foreach (Playlist p in YouTubeApiService.GetUserPlaylistsAsync())
         {
             playlists.Add(p);

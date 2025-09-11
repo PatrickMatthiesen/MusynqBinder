@@ -18,7 +18,11 @@ public class YouTubeApiService(UserManager<ApplicationUser> userManager, IHttpCo
     private readonly IConfiguration _configuration = configuration;
 
     public async IAsyncEnumerable<Playlist> GetUserPlaylistsAsync() {
-        var user = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+        // Guard: ensure we have an authenticated principal
+        if (_httpContextAccessor.HttpContext?.User is not { Identity.IsAuthenticated: true } principal)
+            yield break;
+
+        var user = await _userManager.GetUserAsync(principal);
         if (user == null)
             yield break;
 
@@ -93,7 +97,11 @@ public class YouTubeApiService(UserManager<ApplicationUser> userManager, IHttpCo
     }
 
     public async IAsyncEnumerable<PlaylistItem> GetUserPlaylistItemsAsync(string playlistId) {
-        var user = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+        // Guard: ensure we have an authenticated principal
+        if (_httpContextAccessor.HttpContext?.User is not { Identity.IsAuthenticated: true } principal)
+            yield break;
+
+        var user = await _userManager.GetUserAsync(principal);
         if (user == null)
             yield break;
 

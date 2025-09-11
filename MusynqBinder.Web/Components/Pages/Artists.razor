@@ -55,7 +55,8 @@
 	}
 
 	private async Task OnInputHandler(string input) {
-		await LoadArtistSuggestions(input);
+		if (input.Length > 1)
+			await LoadArtistSuggestions(input);
 	}
 
 	private async Task OnSuggestionSelected(string suggestion, bool navigate = true) {
