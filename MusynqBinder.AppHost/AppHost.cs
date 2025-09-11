@@ -2,13 +2,16 @@ using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+builder.AddDockerComposeEnvironment("env")
+    .WithDashboard(c => c.WithHostPort(8083));
+
 var ticketmasterApiKey = builder.AddParameter("Ticketmaster-ApiKey", secret: true);
 var googleClientId = builder.AddParameter("Google-OAuth-ClientId", secret: true);
 var googleClientSecret = builder.AddParameter("Google-OAuth-ClientSecret", secret: true);
 
 var database = builder.AddPostgres("database")
-    //.WithDataVolume()
-    //.WithLifetime(ContainerLifetime.Persistent)
+    .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent)
     .WithHostPort(6543);
 
 var musicDatabase = database.AddDatabase("musynqbinder");
@@ -39,11 +42,10 @@ builder.AddProject<Projects.MusynqBinder_Web>("webfrontend")
     .WithEnvironment("Google:ClientId", googleClientId)
     .WithEnvironment("Google:ClientSecret", googleClientSecret)
     .WithExternalHttpEndpoints()
-    .WithHttpHealthCheck("/health")
+    //.WithHttpHealthCheck("/health")
     .WithReferenceAndWait(cache)
     .WithReferenceAndWait(identityDatabase)
     .WithReferenceAndWait(concertApi)
-    .WaitFor(concertApi)
     .WaitForCompletion(migrations);
 
 

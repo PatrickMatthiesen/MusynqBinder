@@ -25,7 +25,7 @@ builder.Services.AddScoped<YouTubeApiService>();
 // builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://concerttracker-api") });
 builder.Services.AddHttpClient("ConcertTrackerApi", client =>
 {
-    client.BaseAddress = new Uri("https://concerttracker-api");
+    client.BaseAddress = new Uri("https+http://concerttracker-api");
 });
 
 builder.Services.AddAuthentication(options =>

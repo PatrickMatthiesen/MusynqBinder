@@ -27,6 +27,10 @@
         "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "http://localhost:20178",
         "DOTNET_RESOURCE_SERVICE_ENDPOINT_URL": "http://localhost:22293"
       }
+    },
+    "publish": {
+      "commandName": "Executable",
+      "executablePath": "aspire",
+      "commandLineArgs": "publish -o docker-infra"
     }
-  }
 }
