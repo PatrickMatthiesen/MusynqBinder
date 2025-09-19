@@ -1,16 +1,20 @@
 ﻿@preservewhitespace true
+@inject IJSRuntime JS
+@inject ILogger<InputAutoSuggest> _logger
+@implements IAsyncDisposable
+
 
 <div class="flex-grow relative">
 	<label for="@name" class="sr-only">@label</label>
 	<input 
+		   @ref="inputRef"
 		   type="search"
+		   id="@name"
 		   name="@name"
 		   placeholder="@placeholder"
-		   @bind="searchString"
-		   @oninput="valueUpdated"
-		   @onfocusout="() => showSuggestions = false"
 		   class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-		   autocomplete="off" />
+		   autocomplete="off"
+		   @onfocusout="() => showSuggestions = false" />
 
 	@if (showSuggestions && suggestions?.Count > 0)
 	{
@@ -28,58 +32,90 @@
 </div>
 
 @code {
+	private ElementReference inputRef;
+	private IJSObjectReference? _module;
+	private DotNetObjectReference<InputAutoSuggest>? _selfRef;
+	private string searchString = string.Empty;
 
-	private string searchString { get; set; } = string.Empty;
-
-	[Parameter]
-	[EditorRequired]
+	[Parameter, EditorRequired]
 	public string name { get; set; }
-
-	[Parameter]
-	[EditorRequired]
+	
+	[Parameter, EditorRequired]
 	public string label { get; set; }
-
-	[Parameter]
-	[EditorRequired]
+	
+	[Parameter, EditorRequired]
 	public string placeholder { get; set; }
-
-	[Parameter]
-	[EditorRequired]
+	
+	[Parameter, EditorRequired]
 	public EventCallback<string> onInput { get; set; }
-
-	[Parameter]
-	[EditorRequired]
-	public List<string> suggestions { get; set; } = new List<string>();
-
+	
+	[Parameter, EditorRequired]
+	public List<string> suggestions { get; set; } = new();
+	
 	[Parameter]
 	public EventCallback<string> onSuggestionSelected { get; set; }
+	
+	[Parameter]
+	public int DebounceMs { get; set; } = 300;
+	
+	[Parameter]
+	public int MinimumLength { get; set; } = 2;
 
 	private bool showSuggestions = true;
-	private Timer? debounceTimer;
 
-	private async Task valueUpdated(ChangeEventArgs e) {
-		debounceTimer?.Dispose();
-
-		// showSuggestions = true;
-		if (e.Value is not null and string value)
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
 		{
-			debounceTimer = new Timer(async _ => await InvokeAsync(async () => {
-				showSuggestions = true;
-				await onInput.InvokeAsync(value);
-			}), null, 300, Timeout.Infinite);
+			_module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/debounce.js");
+			_selfRef = DotNetObjectReference.Create(this);
+			await _module.InvokeVoidAsync("initDebounce", inputRef, _selfRef, DebounceMs);
+			if (!string.IsNullOrEmpty(searchString))
+			{
+				await _module.InvokeVoidAsync("setInputValue", inputRef, searchString);
+			}
 		}
 	}
 
-	private async Task SelectSuggestion(string selectedValue) {
+	[JSInvokable]
+	public async Task OnDebouncedInput(string value)
+	{
+		searchString = value;
+
+		if (string.IsNullOrWhiteSpace(value) || value.Length < MinimumLength)
+		{
+			showSuggestions = false;
+			suggestions.Clear();
+			await InvokeAsync(StateHasChanged);
+			return;
+		}
+
+		showSuggestions = true;
+		await onInput.InvokeAsync(value);
+	}
+
+	private async Task SelectSuggestion(string selectedValue)
+	{
 		searchString = selectedValue;
-		// value = selectedValue;
 		showSuggestions = false;
 		suggestions.Clear();
+		if (_module is not null)
+		{
+			await _module.InvokeVoidAsync("setInputValue", inputRef, selectedValue);
+		}
 		await onSuggestionSelected.InvokeAsync(selectedValue);
 	}
 
-	public void Dispose()
+	public async ValueTask DisposeAsync()
 	{
-		debounceTimer?.Dispose();
+		try
+		{
+			if (_module is not null)
+			{
+				await _module.DisposeAsync();
+			}
+		}
+		catch { }
+		_selfRef?.Dispose();
 	}
 }
