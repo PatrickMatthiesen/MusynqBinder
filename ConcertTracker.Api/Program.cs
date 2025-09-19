@@ -1,13 +1,14 @@
-using MusynqBinder.Data.Music;
 using ConcertTracker.Api.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Abstractions;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.Resource;
+using MusynqBinder.Data.Music;
 using MusynqBinder.Shared.DTO;
 using MusynqBinder.Shared.Models;
 using StackExchange.Redis;
@@ -66,7 +67,6 @@ app.MapGet("/weatherforecast", (HttpContext httpContext) =>
         .ToArray();
     return forecast;
 }).WithName("GetWeatherForecast")
-    .WithOpenApi()
     .RequireAuthorization();
 //.CacheOutput();
 
@@ -80,8 +80,7 @@ app.MapGet("/api/concerts/{artistName}", async (string artistName, ConcertServic
     var concerts = await concertService.GetConcertsAsync(artistName);
     return concerts;
 }).WithName("GetConcertsByArtist")
-    .CacheOutput(policy => policy.Expire(TimeSpan.FromHours(24)))
-    .WithOpenApi();
+    .CacheOutput(policy => policy.Expire(TimeSpan.FromHours(24)));
 
 app.MapGet("/api/artists/name/like/{searchString}", async (string searchString, MusicDbContext context) =>
 {
@@ -89,8 +88,7 @@ app.MapGet("/api/artists/name/like/{searchString}", async (string searchString, 
         .Select(a => a.Name);
     return await musicDbContext.ToListAsync();
 }).WithName("GetArtistsWithNameLike")
-    .CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(20)))
-    .WithOpenApi();
+    .CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(20)));
 
 app.MapGet("/api/artists/{artistName}", async (string artistName, MusicDbContext context) =>
 {
@@ -128,8 +126,7 @@ app.MapGet("/api/artists/{artistName}", async (string artistName, MusicDbContext
         })
     };
 }).WithName("GetArtistById")
-    .CacheOutput(policy => policy.Expire(TimeSpan.FromHours(24)))
-    .WithOpenApi();
+    .CacheOutput(policy => policy.Expire(TimeSpan.FromHours(24)));
 
 app.Run();
 

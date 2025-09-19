@@ -18,7 +18,8 @@ var musicDatabase = database.AddDatabase("musynqbinder");
 var identityDatabase = database.AddDatabase("identitydb");
 
 var cache = builder.AddRedis("cache");
-    //.WithDataVolume();
+if (!builder.Environment.IsDevelopment())
+    cache.WithDataVolume();
 cache.WithRedisCommander();
 
 var migrations = builder.AddProject<Projects.MusynqBinder_MigrationService>("musynqbinder-migrationservice")
