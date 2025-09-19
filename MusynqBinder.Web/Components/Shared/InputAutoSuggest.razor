@@ -14,14 +14,26 @@
 		   placeholder="@placeholder"
 		   class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 		   autocomplete="off"
-		   @onfocusout="() => showSuggestions = false" />
+		   aria-autocomplete="list"
+		   aria-expanded="@showSuggestions"
+		   aria-owns="@($"{name}-listbox")"
+		   aria-activedescendant="@(activeIndex >= 0 && activeIndex < suggestions.Count ? $"{name}-option-{activeIndex}" : null)"
+		   @onfocusout="() => showSuggestions = false"
+		   @onkeydown="OnArrowControl" />
 
 	@if (showSuggestions && suggestions?.Count > 0)
 	{
-		<div class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-			@foreach (var suggestion in suggestions)
+		<div id="@($"{name}-listbox")"
+			 role="listbox"
+			 class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+			@for (int i = 0; i < suggestions.Count; i++)
 			{
-				<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
+				var suggestion = suggestions[i];
+				var isActive = i == activeIndex;
+				<div id="@($"{name}-option-{i}")"
+					 role="option"
+					 aria-selected="@(isActive ? "true" : "false")"
+					 class="px-4 py-2 cursor-pointer transition-colors @(isActive ? "bg-blue-100" : "hover:bg-gray-100")"
 					 @onmousedown="@(() => SelectSuggestion(suggestion))"
 					 @onmousedown:preventDefault="true">
 					@suggestion
@@ -36,28 +48,29 @@
 	private IJSObjectReference? _module;
 	private DotNetObjectReference<InputAutoSuggest>? _selfRef;
 	private string searchString = string.Empty;
+	private int activeIndex = -1;
 
 	[Parameter, EditorRequired]
 	public string name { get; set; }
-	
+
 	[Parameter, EditorRequired]
 	public string label { get; set; }
-	
+
 	[Parameter, EditorRequired]
 	public string placeholder { get; set; }
-	
+
 	[Parameter, EditorRequired]
 	public EventCallback<string> onInput { get; set; }
-	
+
 	[Parameter, EditorRequired]
 	public List<string> suggestions { get; set; } = new();
-	
+
 	[Parameter]
 	public EventCallback<string> onSuggestionSelected { get; set; }
-	
+
 	[Parameter]
 	public int DebounceMs { get; set; } = 300;
-	
+
 	[Parameter]
 	public int MinimumLength { get; set; } = 2;
 
@@ -81,6 +94,7 @@
 	public async Task OnDebouncedInput(string value)
 	{
 		searchString = value;
+		activeIndex = -1; // reset highlight on new input
 
 		if (string.IsNullOrWhiteSpace(value) || value.Length < MinimumLength)
 		{
@@ -98,12 +112,66 @@
 	{
 		searchString = selectedValue;
 		showSuggestions = false;
+		activeIndex = -1;
 		suggestions.Clear();
 		if (_module is not null)
 		{
 			await _module.InvokeVoidAsync("setInputValue", inputRef, selectedValue);
 		}
 		await onSuggestionSelected.InvokeAsync(selectedValue);
+	}
+
+	private async Task OnArrowControl(KeyboardEventArgs e)
+	{
+		_logger.LogInformation("Key: {key} Code: {code}", e.Key, e.Code);
+
+		if (!showSuggestions || suggestions.Count == 0)
+		{
+			// Only open on ArrowDown if we have suggestions
+			if (e.Key == "ArrowDown" && suggestions.Count > 0)
+			{
+				showSuggestions = true;
+				activeIndex = 0;
+				StateHasChanged();
+			}
+			return;
+		}
+
+		switch (e.Key)
+		{
+			case "ArrowDown":
+				activeIndex = (activeIndex + 1) % suggestions.Count;
+				break;
+
+			case "ArrowUp":
+				activeIndex = (activeIndex - 1 + suggestions.Count) % suggestions.Count;
+				break;
+
+			case "Enter":
+				if (activeIndex >= 0 && activeIndex < suggestions.Count)
+				{
+					await SelectSuggestion(suggestions[activeIndex]);
+				}
+				return; // prevent re-render log after selection
+
+			case "Tab":
+				// Optional: treat Tab like Enter when something is highlighted
+				if (activeIndex >= 0 && activeIndex < suggestions.Count)
+				{
+					await SelectSuggestion(suggestions[activeIndex]);
+				}
+				return;
+
+			case "Escape":
+				showSuggestions = false;
+				activeIndex = -1;
+				break;
+
+			default:
+				return; // do not re-render for unrelated keys
+		}
+
+		StateHasChanged();
 	}
 
 	public async ValueTask DisposeAsync()
