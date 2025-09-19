@@ -55,12 +55,18 @@
 	public EventCallback<string> onSuggestionSelected { get; set; }
 
 	private bool showSuggestions = true;
+	private Timer? debounceTimer;
 
 	private async Task valueUpdated(ChangeEventArgs e) {
-		showSuggestions = true;
+		debounceTimer?.Dispose();
+
+		// showSuggestions = true;
 		if (e.Value is not null and string value)
 		{
-			await onInput.InvokeAsync((string)e.Value);
+			debounceTimer = new Timer(async _ => await InvokeAsync(async () => {
+				showSuggestions = true;
+				await onInput.InvokeAsync(value);
+			}), null, 300, Timeout.Infinite);
 		}
 	}
 
@@ -70,5 +76,10 @@
 		showSuggestions = false;
 		suggestions.Clear();
 		await onSuggestionSelected.InvokeAsync(selectedValue);
+	}
+
+	public void Dispose()
+	{
+		debounceTimer?.Dispose();
 	}
 }
