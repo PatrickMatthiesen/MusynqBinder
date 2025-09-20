@@ -4,42 +4,25 @@
 @inject IHttpClientFactory httpClientFactory
 @inject ILogger<Concerts> Logger
 @rendermode InteractiveServer
-@implements IDisposable
 
 <div class="max-w-5xl mx-auto">
 	<h1 class="text-3xl font-bold mb-4">Concerts</h1>
-	<div class="mb-6">
-		<EditForm Model="artistName" OnSubmit="LoadConcerts" FormName="SearchArtists" class="flex gap-2">
-			<div class="flex-grow relative">
-				<label for="artistSearchInput" class="sr-only">Search for an artist</label>
-				<input type="search"
-					   name="artistSearchInput"
-					   placeholder="Search for artist..."
-					   @bind="searchString"
-					   @bind:after="OnSearchInput"
-					   @bind:event="oninput"
-					   @onfocusout="() => showSuggestions=false"
-					   class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-					   autocomplete="off" />
 
-				@if (showSuggestions && artistSuggestions?.Count > 0)
-				{
-					<div class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-						@foreach (var suggestion in artistSuggestions)
-						{
-							<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
-								 @onmousedown="@(() => suggestionSelected(suggestion))"
-								 @onmousedown:preventDefault="true">
-								@suggestion
-							</div>
-						}
-					</div>
-				}
-			</div>
-			<button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors" type="submit">
+	<div class="mb-6">
+		<div class="flex gap-2 items-start">
+			<InputAutoSuggest name="concertArtistSearch"
+							  label="Search for an artist"
+							  placeholder="Search for an artist..."
+							  onInput="@OnArtistInput"
+							  onEnter="@LoadConcerts"
+							  onSuggestionSelected="@OnArtistSuggestionSelected"
+							  suggestions="artistSuggestions" />
+
+			<button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+					@onclick="() => LoadConcerts(searchInput)">
 				Search
 			</button>
-		</EditForm>
+		</div>
 	</div>
 
 	@if (concerts == null)
@@ -57,7 +40,10 @@
 	else
 	{
 		<div class="mb-4">
-			<p class="text-lg">Found <span class="font-medium">@concerts.Count</span> concerts for <span class="font-bold">@artistName</span></p>
+			<p class="text-lg">
+				Found <span class="font-medium">@concerts.Count</span> concerts for
+				<span class="font-bold">@artistName</span>
+			</p>
 		</div>
 
 		<div class="space-y-4">
@@ -111,7 +97,9 @@
 									</a>
 								</div>
 							</div>
+
 						</div>
+
 					</div>
 				</div>
 			}
@@ -135,7 +123,7 @@
 </Modal>
 
 @code {
-	private string searchString = "Dabin";
+	private string searchInput = "";
 	private string artistName = "";
 	private string placeholder = "Search for your favorite artist to see upcoming concerts";
 	private CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
@@ -143,120 +131,89 @@
 	private bool isModalVisible = false;
 	private ConcertDto? selectedConcert = null;
 
-	// Autocomplete variables
-	private List<string>? artistSuggestions = new();
-	private bool showSuggestions = false;
-	private Timer? debounceTimer;
+	private List<string> artistSuggestions = new();
 
-	private async Task LoadConcerts() {
-		searchString = searchString.Trim();
-		if (searchString is "") return;
-		artistName = searchString;
+	protected override async Task OnInitializedAsync()
+	{
+		if (!string.IsNullOrWhiteSpace(searchInput))
+			await LoadConcerts(searchInput);
+	}
+
+	private async Task OnArtistInput(string input)
+	{
+		searchInput = input;
+		if (input.Length > 1)
+			await LoadArtistSuggestions(input);
+		else
+			artistSuggestions.Clear();
+	}
+
+	private async Task OnArtistSuggestionSelected(string suggestion)
+	{
+		searchInput = suggestion;
+		await LoadConcerts(suggestion);
+	}
+
+	private async Task LoadConcerts(string query)
+	{
+		query = query.Trim();
+		if (query.Length == 0) return;
+
+		artistName = query;
 		concerts = null;
 		placeholder = "Loading concerts...";
-		showSuggestions = false; // Hide suggestions when searching
-
 
 		try
 		{
 			var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
-			concerts = await httpClient.GetFromJsonAsync<List<ConcertDto>>($"api/concerts/{Uri.EscapeDataString(artistName)}");
+			concerts = await httpClient.GetFromJsonAsync<List<ConcertDto>>(
+				$"api/concerts/{Uri.EscapeDataString(query)}");
+			if (concerts is null)
+				concerts = new List<ConcertDto>();
 		}
 		catch (Exception ex)
 		{
-			Logger.LogError(ex, "Error loading concerts for {ArtistName}", artistName);
+			Logger.LogError(ex, "Error loading concerts for {ArtistName}", query);
 			placeholder = "Error loading concerts. Please try again later.";
+			concerts = Array.Empty<ConcertDto>().ToList();
 		}
 	}
 
-	private Task suggestionSelected(string value)
+	private async Task LoadArtistSuggestions(string search)
 	{
-		searchString = value;
-		return LoadConcerts();
-	}
-
-	private Task OnSearchInput() {
-		// artistName = newValue;
-		// return Task.CompletedTask;
-
-		// Reset the debounce timer
-		debounceTimer?.Dispose();
-
-		if (string.IsNullOrWhiteSpace(searchString) || searchString.Length <= 1)
-		{
-			showSuggestions = false;
-			artistSuggestions?.Clear();
-			return Task.CompletedTask;
-		}
-
-		// Debounce the API call
-		debounceTimer = new Timer(async _ =>
-		{
-			await InvokeAsync(async () =>
-			{
-				await LoadArtistSuggestions(searchString);
-				StateHasChanged();
-			});
-		}, null, TimeSpan.FromMilliseconds(300), Timeout.InfiniteTimeSpan);
-
-		return Task.CompletedTask;
-	}
-
-	private async Task LoadArtistSuggestions(string searchString) {
 		try
 		{
 			var httpClient = httpClientFactory.CreateClient("ConcertTrackerApi");
-			artistSuggestions = await httpClient.GetFromJsonAsync<List<string>>($"api/artists/name/like/{Uri.EscapeDataString(searchString)}");
-			showSuggestions = true;
+			var result = await httpClient.GetFromJsonAsync<List<string>>(
+				$"api/artists/name/like/{Uri.EscapeDataString(search)}");
+			if (result is not null)
+				artistSuggestions = result;
 		}
 		catch (Exception ex)
 		{
-			Logger.LogError(ex, "Error loading artist suggestions for {SearchString}", searchString);
-			artistSuggestions?.Clear();
-			showSuggestions = false;
+			Logger.LogError(ex, "Error loading artist suggestions for {SearchString}", search);
+			artistSuggestions.Clear();
 		}
 	}
 
-	private void OnInputFocus() {
-		if (artistSuggestions?.Count > 0 && !string.IsNullOrWhiteSpace(artistName))
-		{
-			showSuggestions = true;
-		}
-	}
-
-	private void OnKeyDown(KeyboardEventArgs e) {
-		if (e.Key == "Enter" && showSuggestions)
-		{
-			// Don't submit form if suggestions are visible
-			return;
-		}
-	}
-
-	private async Task OnInputBlur() {
-		// Delay hiding suggestions to allow for clicks
-		await Task.Delay(200);
-		showSuggestions = false;
-		// StateHasChanged();
-	}
-
-
-	private void ShowArtistModal(ConcertDto concert) {
+	private void ShowArtistModal(ConcertDto concert)
+	{
 		selectedConcert = concert;
 		isModalVisible = true;
 	}
 
-	private List<string> GetTop5SimilarArtists(List<string> names, string searchString) {
+	private List<string> GetTop5SimilarArtists(List<string> names, string search)
+	{
 		return names
-			.OrderBy(n => LevenshteinDistance(n, searchString))
+			.OrderBy(n => LevenshteinDistance(n, search))
 			.Take(5)
 			.ToList();
 	}
 
-	private int LevenshteinDistance(string a, string b) {
-		if (string.IsNullOrEmpty(a))
-			return b?.Length ?? 0;
-		if (string.IsNullOrEmpty(b))
-			return a.Length;
+	private int LevenshteinDistance(string a, string b)
+	{
+		if (string.IsNullOrEmpty(a)) return b?.Length ?? 0;
+		if (string.IsNullOrEmpty(b)) return a.Length;
 
 		var costs = new int[b.Length + 1];
 		for (int j = 0; j < costs.Length; j++)
@@ -265,20 +222,16 @@
 		for (int i = 1; i <= a.Length; i++)
 		{
 			costs[0] = i;
-			int prevCost = i - 1;
+			int prev = i - 1;
 			for (int j = 1; j <= b.Length; j++)
 			{
-				int currentCost = costs[j];
+				int current = costs[j];
 				costs[j] = Math.Min(
 					Math.Min(costs[j] + 1, costs[j - 1] + 1),
-					prevCost + (a[i - 1] == b[j - 1] ? 0 : 1));
-				prevCost = currentCost;
+					prev + (a[i - 1] == b[j - 1] ? 0 : 1));
+				prev = current;
 			}
 		}
 		return costs[b.Length];
-	}
-
-	public void Dispose() {
-		debounceTimer?.Dispose();
 	}
 }

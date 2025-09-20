@@ -1,6 +1,4 @@
 // Generic client-side debounce for Blazor Server inputs.
-// Minimizes SignalR traffic by only invoking .NET after user stops typing.
-// Usage: dynamic import then initDebounce(element, dotNetRef, delayMs)
 
 export function initDebounce(element, dotNetRef, delay) {
     if (!element) return;
@@ -9,13 +7,13 @@ export function initDebounce(element, dotNetRef, delay) {
     const handler = () => {
         if (timerId) clearTimeout(timerId);
         timerId = setTimeout(() => {
-            // Trailing-edge invoke
             dotNetRef.invokeMethodAsync('OnDebouncedInput', element.value);
         }, delay);
     };
 
-    element.__debounceHandler = handler; // store reference for optional cleanup
+    element.__debounceHandler = handler;
     element.addEventListener('input', handler);
+    element.__debounceTimerRef = () => timerId;
 }
 
 export function disposeDebounce(element) {
@@ -31,4 +29,10 @@ export function setInputValue(element, value) {
     if (element.value !== value) {
         element.value = value ?? '';
     }
+}
+
+// Flush any pending debounce immediately (used when user presses Enter early)
+export function flushDebounce(element, dotNetRef) {
+    if (!element) return;
+    dotNetRef.invokeMethodAsync('OnDebouncedInput', element.value);
 }
