@@ -12,19 +12,23 @@ public class ConcertService(MusicDbContext context, IConcertProvider provider) {
 
         // Batch check for existing concerts instead of querying in a loop
         var concertList = concerts.ToList();
-        var concertIds = concertList.Select(c => c.Id).ToHashSet();
-        var existingConcertIds = await context.Concerts
-            .Where(c => concertIds.Contains(c.Id))
-            .Select(c => c.Id)
-            .ToHashSetAsync();
-
-        foreach (var concert in concertList) {
-            if (!existingConcertIds.Contains(concert.Id)) {
-                context.Concerts.Add(concert);
-            }
-        }
         
-        await context.SaveChangesAsync();
+        if (concertList.Count > 0)
+        {
+            var concertIds = concertList.Select(c => c.Id).ToHashSet();
+            var existingConcertIds = await context.Concerts
+                .Where(c => concertIds.Contains(c.Id))
+                .Select(c => c.Id)
+                .ToHashSetAsync();
+
+            foreach (var concert in concertList) {
+                if (!existingConcertIds.Contains(concert.Id)) {
+                    context.Concerts.Add(concert);
+                }
+            }
+            
+            await context.SaveChangesAsync();
+        }
 
         var ArtistDtos = concerts
             .SelectMany(c => c.Artists)
