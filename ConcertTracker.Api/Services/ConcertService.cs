@@ -1,6 +1,7 @@
 ﻿using MusynqBinder.Data.Music;
 using MusynqBinder.Shared.DTO;
 using MusynqBinder.Shared.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ConcertTracker.Api.Services;
 
@@ -9,12 +10,16 @@ public class ConcertService(MusicDbContext context, IConcertProvider provider) {
         var concerts = await provider.FetchConcertsAsync(artistName);
         // Save to database if needed
 
-        foreach (var concert in concerts) {
+        // Batch check for existing concerts instead of querying in a loop
+        var concertList = concerts.ToList();
+        var concertIds = concertList.Select(c => c.Id).ToHashSet();
+        var existingConcertIds = await context.Concerts
+            .Where(c => concertIds.Contains(c.Id))
+            .Select(c => c.Id)
+            .ToHashSetAsync();
 
-            var existingConcert = context.Concerts
-                .FirstOrDefault(c => c.Id == concert.Id);
-            
-            if (existingConcert == null) {
+        foreach (var concert in concertList) {
+            if (!existingConcertIds.Contains(concert.Id)) {
                 context.Concerts.Add(concert);
             }
         }

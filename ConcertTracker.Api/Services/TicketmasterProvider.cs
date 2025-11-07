@@ -17,6 +17,7 @@ public class TicketmasterProvider(MusicDbContext context, HttpClient httpClient,
         var cutoff = DateTime.UtcNow.AddHours(-cacheExpiryHours);
     
         var existing = await context.Artists
+            .AsNoTracking()
             .Where(a => EF.Functions.ILike(a.Name, $"{artistName}%"))
             .Include(a => a.Concerts.Where(c => c.Date > DateTime.UtcNow))
             .ThenInclude(c => c.Artists)
@@ -91,6 +92,7 @@ public class TicketmasterProvider(MusicDbContext context, HttpClient httpClient,
 
         // Load existing artists from database in one query
         var existingArtists = await context.Artists
+            .AsNoTracking()
             .Where(a => allArtistNames.Contains(a.Name))
             .ToDictionaryAsync(a => a.Name, StringComparer.OrdinalIgnoreCase);
 
