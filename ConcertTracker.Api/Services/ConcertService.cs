@@ -21,13 +21,18 @@ public class ConcertService(MusicDbContext context, IConcertProvider provider) {
                 .Select(c => c.Id)
                 .ToHashSetAsync();
 
+            var hasNewConcerts = false;
             foreach (var concert in concertList) {
                 if (!existingConcertIds.Contains(concert.Id)) {
                     context.Concerts.Add(concert);
+                    hasNewConcerts = true;
                 }
             }
             
-            await context.SaveChangesAsync();
+            if (hasNewConcerts)
+            {
+                await context.SaveChangesAsync();
+            }
         }
 
         var ArtistDtos = concerts
