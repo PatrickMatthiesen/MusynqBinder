@@ -35,7 +35,7 @@ public class ConcertService(MusicDbContext context, IConcertProvider provider) {
             }
         }
 
-        var ArtistDtos = concerts
+        var ArtistDtos = concertList
             .SelectMany(c => c.Artists)
             .DistinctBy(a => a.Id)
             .ToDictionary(a => a.Id, a => new ArtistDto {
@@ -53,7 +53,7 @@ public class ConcertService(MusicDbContext context, IConcertProvider provider) {
                 }).ToList()
             });
 
-        return concerts.Select(c => new ConcertDto {
+        return concertList.Select(c => new ConcertDto {
             Id = c.Id,
             Artists = [.. c.Artists.Where(a => ArtistDtos.ContainsKey(a.Id)).Select(a => ArtistDtos[a.Id])],
             Date = c.Date,
