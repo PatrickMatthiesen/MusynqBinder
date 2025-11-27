@@ -10,7 +10,7 @@ public class WebTests
     public async Task GetWebResourceRootReturnsOkStatusCode()
     {
         // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
+        var cancellationToken = CancellationToken.None;
 
         var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MusynqBinder_AppHost>(cancellationToken);
         appHost.Services.AddLogging(logging =>

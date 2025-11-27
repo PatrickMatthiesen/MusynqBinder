@@ -42,7 +42,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --configuration Release --no-build --collect "XPlat Code Coverage" --logger "trx;LogFileName=test_results.trx"
+        run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=test_results.trx"
 
       - name: Upload Test Results
         if: always()

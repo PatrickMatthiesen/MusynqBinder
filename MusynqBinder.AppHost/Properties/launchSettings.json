@@ -33,4 +33,5 @@
       "executablePath": "aspire",
       "commandLineArgs": "publish -o docker-infra"
     }
+  }
 }
